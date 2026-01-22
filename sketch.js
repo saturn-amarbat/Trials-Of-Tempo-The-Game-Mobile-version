@@ -203,10 +203,17 @@ function setup() {
   calculateGameScale();
   loadHighScore();
   colorMode(HSB, 360, 100, 100, 255);
-  textFont("monospace");
+  textFont("Rajdhani");
   beatInterval = framesPerBeat(bpm);
   initParallax();
   resetPlayer();
+
+  // Hide loading screen
+  const loadingScreen = document.getElementById('loading');
+  if (loadingScreen) {
+    loadingScreen.style.opacity = '0';
+    setTimeout(() => loadingScreen.remove(), 500);
+  }
 
   introVideo = createVideo("assets/visuals/Opening.mp4");
   introVideo.size(LOGICAL_WIDTH, LOGICAL_HEIGHT);
