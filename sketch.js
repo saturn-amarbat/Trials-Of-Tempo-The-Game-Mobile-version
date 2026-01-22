@@ -333,16 +333,20 @@ function draw() {
     flashAlpha *= 0.85;
   }
 
+  drawScanlines();
+
   pop();
 }
 
 // ─── TITLE ───
 function drawTitle() {
-  fill(240, 80, 10);
-  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  // Dynamic Background
+  let bgHue = (frameCount * 0.2) % 360;
+  background(bgHue, 40, 10); // Dark shifting background
 
   drawParallaxBG();
   drawAnimatedGrid();
+  
   if (titleSong && titleSong.isLoaded() && !titleSong.isPlaying())
     titleSong.loop();
   if (gameIntroSong && gameIntroSong.isPlaying()) gameIntroSong.stop();
@@ -350,21 +354,35 @@ function drawTitle() {
 
   push();
   translate(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 3);
+  
+  // Floating Title
+  let floatY = sin(frameCount * 0.05) * 10;
+  translate(0, floatY);
+  
   scale(pulseScale);
-  fill(rgbHue, 90, 100);
+  
+  // Shadow
+  fill(bgHue, 90, 50);
   textAlign(CENTER, CENTER);
   textSize(64);
   textStyle(BOLD);
+  text("TRIALS OF TEMPO", 4, 4);
+  
+  // Main Text
+  fill(rgbHue, 90, 100);
   text("TRIALS OF TEMPO", 0, 0);
-  fill(rgbHue, 90, 100, 100);
-  textSize(66);
-  text("TRIALS OF TEMPO", 0, 0);
+  
+  // Glitch effect on title
+  if (frameCount % 60 < 5) {
+      fill(255);
+      text("TRIALS OF TEMPO", random(-2, 2), random(-2, 2));
+  }
   pop();
 
   fill(0, 0, 90);
   textSize(18);
   textAlign(CENTER, CENTER);
-  text("Endless Rhythm Adventure", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 40);
+  text("Endless Rhythm Adventure", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 30);
 
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
@@ -372,27 +390,27 @@ function drawTitle() {
   drawMenuButton(
     "START",
     LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 20,
-    200,
-    40,
+    LOGICAL_HEIGHT / 2 + 40,
+    220,
+    50,
     mx,
     my,
   );
   drawMenuButton(
     "CUSTOMIZE",
     LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 70,
-    200,
-    40,
+    LOGICAL_HEIGHT / 2 + 100,
+    220,
+    50,
     mx,
     my,
   );
   drawMenuButton(
     "INSTRUCTIONS",
     LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 120,
-    200,
-    40,
+    LOGICAL_HEIGHT / 2 + 160,
+    220,
+    50,
     mx,
     my,
   );
@@ -1380,13 +1398,19 @@ function mousePressed() {
     return;
   }
   if (gameState === "title") {
-    if (mx > LOGICAL_WIDTH / 2 - 100 && mx < LOGICAL_WIDTH / 2 + 100) {
+    if (mx > LOGICAL_WIDTH / 2 - 110 && mx < LOGICAL_WIDTH / 2 + 110) { // Width 220
       if (sfxButton) sfxButton.play();
-      if (my > LOGICAL_HEIGHT / 2 + 0 && my < LOGICAL_HEIGHT / 2 + 40)
+      
+      // START Button (Center H/2 + 40, Height 50) -> Range approx 15 to 65
+      if (my > LOGICAL_HEIGHT / 2 + 15 && my < LOGICAL_HEIGHT / 2 + 65)
         startGame();
-      else if (my > LOGICAL_HEIGHT / 2 + 50 && my < LOGICAL_HEIGHT / 2 + 90)
+      
+      // CUSTOMIZE Button (Center H/2 + 100, Height 50) -> Range approx 75 to 125
+      else if (my > LOGICAL_HEIGHT / 2 + 75 && my < LOGICAL_HEIGHT / 2 + 125)
         gameState = "customize";
-      else if (my > LOGICAL_HEIGHT / 2 + 100 && my < LOGICAL_HEIGHT / 2 + 140)
+      
+      // INSTRUCTIONS Button (Center H/2 + 160, Height 50) -> Range approx 135 to 185
+      else if (my > LOGICAL_HEIGHT / 2 + 135 && my < LOGICAL_HEIGHT / 2 + 185)
         gameState = "instructions";
     }
   } else if (gameState === "customize") {
@@ -1774,4 +1798,33 @@ function setupMusicLoopSpeeding(sessionID) {
   }
 
   playLoopSegment();
+}
+
+function drawScanlines() {
+  push();
+  // Scanlines
+  noStroke();
+  fill(0, 0, 0, 50);
+  for (let y = 0; y < LOGICAL_HEIGHT; y += 4) {
+    rect(0, y, LOGICAL_WIDTH, 2);
+  }
+  
+  // Vignette
+  let ctx = drawingContext;
+  let gradient = ctx.createRadialGradient(
+    LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.4,
+    LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.8
+  );
+  gradient.addColorStop(0, "rgba(0,0,0,0)");
+  gradient.addColorStop(1, "rgba(0,0,0,0.5)");
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  
+  // RGB Split (Chromatic Aberration) at edges
+  if (gameState === 'playing' && frameCount % 4 === 0) {
+      // Very subtle random twitch
+      translate(random(-1, 1), 0);
+  }
+  pop();
 }
