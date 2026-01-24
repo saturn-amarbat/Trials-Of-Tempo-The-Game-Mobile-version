@@ -32,6 +32,7 @@ let sfxButton, sfxJet, sfxJetPower, sfxPowerUp, sfxDamage, sfxGameOver;
 
 // ─── GAME STATE ───
 let gameState = "intro";
+let lastGameState = "";
 let introVideo;
 let autoScrollSpeed = 2;
 let songDuration = 236;
@@ -286,6 +287,11 @@ function draw() {
       random(-screenShake, screenShake),
       random(-screenShake, screenShake),
     );
+  }
+
+  if (gameState !== lastGameState) {
+    lastGameState = gameState;
+    updatePageTitle();
   }
 
   switch (gameState) {
@@ -1902,3 +1908,19 @@ function drawScanlines() {
   }
   pop();
 }
+
+function updatePageTitle() {
+  let baseTitle = "Trials of Tempo";
+  if (gameState === "playing") {
+    document.title = "▶ " + baseTitle;
+  } else if (gameState === "paused") {
+    document.title = "⏸ PAUSED - " + baseTitle;
+  } else if (gameState === "gameOver") {
+    document.title = "❌ GAME OVER - Score: " + floor(score);
+  } else if (gameState === "victory") {
+    document.title = "🏆 VICTORY - " + baseTitle;
+  } else {
+    document.title = baseTitle;
+  }
+}
+
