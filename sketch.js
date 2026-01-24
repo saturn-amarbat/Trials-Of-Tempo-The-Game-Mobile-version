@@ -572,15 +572,38 @@ function drawInstructions() {
 
 // ─── UPDATE & DRAW GAME ───
 function updateGame() {
-  // ✅ BPM & scroll are now driven ONLY by music loops
-  autoScrollSpeed = constrain(autoScrollSpeed, 2, 12);
-  bpm = constrain(bpm, 90, 200);
+  // ✅ CONTINUOUS RAMPING
+  // Increase speed by a tiny amount every frame (approx +1 BPM every 10 seconds)
+  // Base BPM 90. Target +1 BPM in 600 frames. 1/90 = 0.011 increase in %?
+  // 90 * (1 + x) = 91 => 1+x = 91/90 => x = 1/90 approx 0.011.
+  // Per frame (60fps) => 0.011 / 600 = 0.000018
+  
+  if (gameState === "playing") {
+      musicSpeed += 0.00005; 
+      musicSpeed = min(musicSpeed, 2.5); // Cap at 2.5x speed (225 BPM)
+  }
+
+  bpm = 90 * musicSpeed;
+  bpm = constrain(bpm, 90, 225);
+  
+  autoScrollSpeed = 2 * musicSpeed; // Linear relation for smoothness
   beatInterval = framesPerBeat(bpm);
 
   cameraY -= autoScrollSpeed;
 
+  // Update Song Rate dynamically
+  let activeSong = null;
+  if (gameIntroSong && gameIntroSong.isPlaying()) activeSong = gameIntroSong;
+  else if (gameLoopSong && gameLoopSong.isPlaying()) activeSong = gameLoopSong;
+
+  if (activeSong) {
+      // Only update rate if it changed significantly to avoid audio artifacts? 
+      // Actually p5.sound handles it, but let's just set it.
+      activeSong.rate(musicSpeed);
+  }
+
   // PHYSICS SCALING
-  let bpmFactor = map(bpm, 90, 200, 1.0, 2.0);
+  let bpmFactor = musicSpeed; // Simplified since musicSpeed is the master scale
   accel = bpmFactor;
   maxVel = 20 * bpmFactor;
 
@@ -878,7 +901,7 @@ function drawGameUI() {
   textSize(16);
   let timeAlive = floor((frameCount - sessionStartFrame) / 60);
   text(
-    "TIME: " + timeAlive + "s  |  BPM: " + floor(bpm),
+    "TIME: " + timeAlive + "s  |  BPM: " + bpm.toFixed(1),
     LOGICAL_WIDTH / 2,
     18,
   );
@@ -1853,18 +1876,12 @@ function setupMusicLoopSpeeding(sessionID) {
 
     loopCount++;
 
-    // ✅ SCALE DIFFICULTY
-    musicSpeed = min(musicSpeed * 1.03, 1.6);
-    autoScrollSpeed = min(autoScrollSpeed * 1.05, 12);
-    bpm = min(bpm * 1.03, 200);
-    beatInterval = framesPerBeat(bpm);
-
     console.log("Loop:", loopCount, "MusicSpeed:", musicSpeed);
 
     gameLoopSong.stop();
     gameLoopSong.disconnect(); // ✅ clears audio nodes
     gameLoopSong.connect(); // ✅ reconnect fresh
-    gameLoopSong.rate(musicSpeed);
+    // Rate is applied in updateGame
     gameLoopSong.play();
 
     lastBeatFrame = frameCount;
