@@ -112,6 +112,7 @@ let activePowerup = null;
 let powerupDuration = 0;
 let queuedPowerup = null;
 let collectibles = [];
+let floatingTexts = [];
 
 // ─── CAMERA & STAGE ───
 let cameraY = 0;
@@ -643,7 +644,9 @@ function updateGame() {
         activePowerup = null;
         powerupDuration = 0;
         flashAlpha = 100;
-        score += 50;
+        let points = 50 * comboMultiplier;
+        score += points;
+        spawnFloatingText(obs.x, obs.y, "+" + points, color(120, 80, 100));
       } else {
         onPlayerHit();
       }
@@ -662,8 +665,14 @@ function updateGame() {
     }
 
     if (dist(player.x, player.y, pow.x, pow.y) < 30) {
-      if (!queuedPowerup && !activePowerup) queuedPowerup = pow.type;
-      else score += 150;
+      if (!queuedPowerup && !activePowerup) {
+        queuedPowerup = pow.type;
+        spawnFloatingText(pow.x, pow.y, pow.type.toUpperCase() + "!", color(60, 90, 100));
+      }
+      else {
+        score += 150;
+        spawnFloatingText(pow.x, pow.y, "+150", color(60, 90, 100));
+      }
       powerups.splice(i, 1);
       score += 100;
     }
@@ -685,7 +694,9 @@ function updateGame() {
       gem.y += (player.y - gem.y) * 0.03;
     }
     if (d < 26) {
-      score += 50 * comboMultiplier;
+      let points = 50 * comboMultiplier;
+      score += points;
+      spawnFloatingText(gem.x, gem.y, "+" + floor(points), color(50, 90, 100));
       comboMultiplier = min(comboMultiplier + 0.05, 5);
       comboTimer = 180;
       collectibles.splice(i, 1);
@@ -704,6 +715,11 @@ function updateGame() {
   for (let i = particles.length - 1; i >= 0; i--) {
     particles[i].update();
     if (particles[i].life <= 0) particles.splice(i, 1);
+  }
+
+  for (let i = floatingTexts.length - 1; i >= 0; i--) {
+    floatingTexts[i].update();
+    if (floatingTexts[i].life <= 0) floatingTexts.splice(i, 1);
   }
 
   if (comboTimer > 0) {
@@ -734,6 +750,8 @@ function drawGame() {
   blendMode(ADD);
   for (let p of particles) p.draw();
   pop();
+
+  for (let ft of floatingTexts) ft.draw();
 
   if (shockwaveActive) {
     noFill();
@@ -1220,6 +1238,36 @@ function spawnParticle(x, y, colorStr) {
   });
 }
 
+function spawnFloatingText(x, y, txt, col) {
+  floatingTexts.push({
+    x: x,
+    y: y,
+    txt: txt,
+    col: col || color(0, 0, 100),
+    life: 60,
+    maxLife: 60,
+    vy: -2,
+    update: function() {
+      this.y += this.vy;
+      this.vy *= 0.95; // Slow down
+      this.life--;
+    },
+    draw: function() {
+      push();
+      textAlign(CENTER, CENTER);
+      textSize(20);
+      textStyle(BOLD);
+      let alpha = map(this.life, 0, this.maxLife, 0, 255);
+      // Stroke for better visibility
+      stroke(0, 0, 0, alpha);
+      strokeWeight(2);
+      fill(hue(this.col), saturation(this.col), brightness(this.col), alpha);
+      text(this.txt, this.x, this.y);
+      pop();
+    }
+  });
+}
+
 function spawnExplosionParticle(x, y) {
   particles.push({
     x,
@@ -1498,6 +1546,7 @@ function hardRestartGame() {
   powerups = [];
   collectibles = [];
   particles = [];
+  floatingTexts = [];
   activePowerup = null;
   powerupDuration = 0;
   queuedPowerup = null;
@@ -1686,6 +1735,7 @@ function startGame() {
   powerups = [];
   collectibles = [];
   particles = [];
+  floatingTexts = [];
   activePowerup = null;
   powerupDuration = 0;
   queuedPowerup = null;
