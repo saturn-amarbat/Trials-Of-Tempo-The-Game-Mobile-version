@@ -5,6 +5,9 @@ html, body {
   color: white;
   font-family: 'Rajdhani', sans-serif;
   overflow: hidden; /* Prevent scrollbars */
+  touch-action: none; /* Prevent mobile scrolling/zooming */
+  user-select: none; /* Prevent text selection */
+  -webkit-user-select: none;
 }
 
 canvas {
