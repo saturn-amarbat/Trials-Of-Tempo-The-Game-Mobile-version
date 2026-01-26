@@ -399,7 +399,7 @@ function drawTitle() {
     "START",
     LOGICAL_WIDTH / 2,
     LOGICAL_HEIGHT / 2 + 40,
-    220,
+    300,
     50,
     mx,
     my,
@@ -408,7 +408,7 @@ function drawTitle() {
     "CUSTOMIZE",
     LOGICAL_WIDTH / 2,
     LOGICAL_HEIGHT / 2 + 100,
-    220,
+    300,
     50,
     mx,
     my,
@@ -417,7 +417,7 @@ function drawTitle() {
     "INSTRUCTIONS",
     LOGICAL_WIDTH / 2,
     LOGICAL_HEIGHT / 2 + 160,
-    220,
+    300,
     50,
     mx,
     my,
@@ -1564,7 +1564,7 @@ function mousePressed() {
     return;
   }
   if (gameState === "title") {
-    if (mx > LOGICAL_WIDTH / 2 - 110 && mx < LOGICAL_WIDTH / 2 + 110) { // Width 220
+    if (mx > LOGICAL_WIDTH / 2 - 150 && mx < LOGICAL_WIDTH / 2 + 150) { // Width 300
       if (sfxButton) sfxButton.play();
       
       // START Button (Center H/2 + 40, Height 50) -> Range approx 15 to 65
