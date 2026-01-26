@@ -1470,6 +1470,82 @@ function drawCredits() {
 let creditStartFrame = 0;
 
 // ─── INPUT ───
+// Expose functions to window for p5.js global mode
+window.setup = setup;
+window.draw = draw;
+window.windowResized = windowResized;
+window.mousePressed = mousePressed;
+window.keyPressed = keyPressed;
+
+// Touch Variables
+let touchStartX = 0;
+let touchStartY = 0;
+let isTouchingLeft = false;
+
+window.touchStarted = function() {
+  if (getAudioContext().state !== 'running') {
+    getAudioContext().resume();
+  }
+
+  // Prevent default behavior to stop scrolling
+  // return false; 
+  
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+
+  // If in menu, treat as mouse press
+  if (gameState !== "playing") {
+    mousePressed();
+    return false;
+  }
+
+  // In Game: Split screen controls
+  // Left half = Joystick
+  if (mouseX < windowWidth / 2) {
+    touchStartX = mouseX;
+    touchStartY = mouseY;
+    isTouchingLeft = true;
+  } 
+  // Right half = Action (Powerup / Dash)
+  else {
+    // Tap right side to use powerup
+    if (queuedPowerup) {
+      activatePowerup(queuedPowerup);
+    }
+  }
+  return false;
+}
+
+window.touchMoved = function() {
+  if (gameState !== "playing") return false;
+
+  if (isTouchingLeft) {
+    let dx = mouseX - touchStartX;
+    let dy = mouseY - touchStartY;
+    
+    // Sensitivity factor
+    const sensitivity = 0.2;
+
+    player.vx += dx * sensitivity;
+    player.vy += dy * sensitivity;
+
+    // Reset start to current to avoid "runaway" acceleration
+    touchStartX = mouseX;
+    touchStartY = mouseY;
+  }
+  return false;
+}
+
+window.touchEnded = function() {
+  if (gameState !== "playing") return false;
+  
+  // Simple release check
+  // Note: multi-touch logic is complex in p5 global mode, 
+  // this assumes single touch for movement mainly.
+  isTouchingLeft = false;
+  return false;
+}
+
 function mousePressed() {
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
