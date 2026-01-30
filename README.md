@@ -49,14 +49,20 @@ Alternative servers: `npx serve` or `php -S localhost:8000`
 
 ## Controls
 
+### Desktop (Keyboard)
 | Input             | Action           |
 | ----------------- | ---------------- |
 | WASD / Arrow Keys | Movement         |
 | Shift             | Dash             |
 | Space             | Activate powerup |
 | P                 | Pause            |
-| R                 | Restart          |
-| M                 | Main menu        |
+
+### Mobile (Touch)
+| Input             | Action           |
+| ----------------- | ---------------- |
+| Virtual Joystick  | Movement         |
+| DASH Button       | Dash             |
+| PWR Button        | Activate powerup |
 
 ## Development Status
 
