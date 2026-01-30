@@ -922,8 +922,9 @@ function drawVignette() {
     let grad = drawingContext.createRadialGradient(cx, cy, maxR * 0.4, cx, cy, maxR);
     
     if (healthPct <= 0.4) {
-        // Red pulse
-        let pulse = (sin(frameCount * 0.2) + 1) * 0.5; // 0 to 1
+        // Red pulse - Faster as health drops
+        let pulseSpeed = map(healthPct, 0.4, 0, 0.2, 0.8);
+        let pulse = (sin(frameCount * pulseSpeed) + 1) * 0.5; // 0 to 1
         let intensity = map(healthPct, 0.4, 0, 0, 0.8) + pulse * 0.2;
         grad.addColorStop(0, "rgba(0,0,0,0)");
         grad.addColorStop(1, `rgba(255, 0, 0, ${intensity})`);
