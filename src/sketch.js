@@ -145,7 +145,9 @@ let bestTime = 0;
 let totalCredits = 0;
 
 // ─── MOBILE CONTROLS ───
+// VirtualJoystick instance for left-hand movement
 let joystick;
+// TouchButton instances for right-hand actions
 let btnDash;
 let btnPower;
 
