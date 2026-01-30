@@ -1934,7 +1934,8 @@ function startGame() {
 function drawPausedOverlay() {
   push();
   noStroke();
-  fill(0, 0, 0, 150);
+  // Dark blue semi-transparent overlay to match theme
+  fill(240, 60, 10, 200);
   rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
