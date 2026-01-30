@@ -1904,7 +1904,8 @@ function performDash() {
              // Spawn particles in opposite direction
              let px = player.x + random(-10, 10);
              let py = player.y + random(-10, 10);
-             let pColor = color(300, 60, 100); // Pink/Purple dash color
+             // Mix Pink and Cyan for vibrant cyber effect
+             let pColor = random() > 0.5 ? color(300, 60, 100) : color(180, 80, 100);
              
              // Create a custom particle for dash
              particles.push({
