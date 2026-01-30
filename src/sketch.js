@@ -139,9 +139,15 @@ let comboMultiplier = 1;
 let comboTimer = 0;
 let displayedHealth = 100;
 
-// ─── HIGH SCORE SYSTEM ───
+// ─── HIGH SCORE & DATA ───
 let highScore = 0;
 let bestTime = 0;
+let totalCredits = 0;
+
+// ─── MOBILE CONTROLS ───
+let joystick;
+let btnDash;
+let btnPower;
 
 function preload() {
   titleSong = loadSound(
@@ -203,12 +209,23 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   calculateGameScale();
-  loadHighScore();
+  loadData();
   colorMode(HSB, 360, 100, 100, 255);
   textFont("Rajdhani");
   beatInterval = framesPerBeat(bpm);
   initParallax();
   resetPlayer();
+
+  // Initialize Mobile Controls
+  joystick = new VirtualJoystick(120, LOGICAL_HEIGHT - 120, 70);
+  
+  btnDash = new TouchButton("DASH", LOGICAL_WIDTH - 100, LOGICAL_HEIGHT - 100, 45, color(320, 80, 100), () => {
+      performDash();
+  });
+  
+  btnPower = new TouchButton("PWR", LOGICAL_WIDTH - 220, LOGICAL_HEIGHT - 80, 35, color(180, 80, 100), () => {
+      if (queuedPowerup) activatePowerup(queuedPowerup);
+  });
 
   // Hide loading screen
   const loadingScreen = document.getElementById('loading');
@@ -423,13 +440,18 @@ function drawTitle() {
     my,
   );
 
+  // Stats Display
   fill(0, 0, 90);
   textSize(24);
-  text("HIGH SCORE: " + highScore, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 70);
+  text("HIGH SCORE: " + highScore, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80);
+  
+  fill(50, 90, 100);
+  textSize(20);
+  text("CREDITS: " + totalCredits, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 55);
 
   fill(0, 0, 60);
   textSize(12);
-  text("Music by Cacola", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 30);
+  text("Music by Cacola", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 20);
 }
 
 function drawMenuButton(label, x, y, w, h, mx, my) {
@@ -522,17 +544,11 @@ function drawInstructions() {
   y += lineHeight;
 
   fill(0, 0, 80);
-  text("UP / W  - Fly Up", x + 20, y);
+  text("JOYSTICK / WASD - Move", x + 20, y);
   y += lineHeight;
-  text("LEFT / A  - Move Left", x + 20, y);
+  text("DASH BTN / SHIFT - Dash", x + 20, y);
   y += lineHeight;
-  text("RIGHT / D - Move Right", x + 20, y);
-  y += lineHeight;
-  text("DOWN / S - Move Down", x + 20, y);
-  y += lineHeight;
-  text("SHIFT - Dash", x + 20, y);
-  y += lineHeight + 10;
-  text("SPACE - Use Powerup", x + 20, y);
+  text("PWR BTN / SPACE - Use Powerup", x + 20, y);
   y += lineHeight + 10;
 
   fill(0, 0, 90);
@@ -610,12 +626,19 @@ function updateGame() {
   if (activePowerup === "speed") targetSpeed += 5;
   playerSpeed = lerp(playerSpeed, targetSpeed, 0.05);
 
+  // ─── KEYBOARD MOVEMENT ───
   if (keyIsDown(UP_ARROW) || keyIsDown(87)) player.vy -= accel;
   if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) player.vy += accel;
   if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.vx -= accel;
   if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.vx += accel;
+  
+  // ─── JOYSTICK MOVEMENT ───
+  if (joystick && joystick.active) {
+      player.vx += joystick.inputX * accel * 1.5; // Multiplier for feel
+      player.vy += joystick.inputY * accel * 1.5;
+  }
 
-  if ((keyIsDown(UP_ARROW) || keyIsDown(87)) && sfxJet && sfxJet.isLoaded()) {
+  if ((keyIsDown(UP_ARROW) || keyIsDown(87) || (joystick && joystick.inputY < -0.2)) && sfxJet && sfxJet.isLoaded()) {
     if (!sfxJet.isPlaying()) sfxJet.loop();
   } else {
     if (sfxJet && sfxJet.isPlaying()) sfxJet.stop();
@@ -628,6 +651,9 @@ function updateGame() {
     player.vy *= 1.08;
   }
   if (dashCooldown > 0) dashCooldown--;
+  
+  // Update Buttons
+  if (btnDash) btnDash.update(dashCooldown / difficulties[difficulty].dashCooldownMax);
 
   // Physics Application
   player.vx = constrain(player.vx, -maxVel, maxVel);
@@ -728,6 +754,10 @@ function updateGame() {
       comboMultiplier = min(comboMultiplier + 0.05, 5);
       comboTimer = 180;
       collectibles.splice(i, 1);
+      
+      // ✅ CURRENCY UPDATE
+      totalCredits++;
+      
       for (let k = 0; k < 6; k++)
         spawnParticle(player.x, player.y, color(50, 90, 100));
     }
@@ -816,16 +846,16 @@ function drawCollectible(gem) {
 }
 
 function drawPlayer() {
-  let movingLeft = keyIsDown(LEFT_ARROW) || keyIsDown(65);
-  let movingRight = keyIsDown(RIGHT_ARROW) || keyIsDown(68);
+  let movingLeft = keyIsDown(LEFT_ARROW) || keyIsDown(65) || (joystick && joystick.inputX < -0.2);
+  let movingRight = keyIsDown(RIGHT_ARROW) || keyIsDown(68) || (joystick && joystick.inputX > 0.2);
 
   if (movingLeft || movingRight) {
     frameIndex = frameIndex === 0 ? 1 : 0;
   }
 
-  if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
+  if (movingLeft) {
     lastDir = "left";
-  } else if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {
+  } else if (movingRight) {
     lastDir = "right";
   }
 
@@ -948,6 +978,18 @@ function drawGameUI() {
   textAlign(LEFT, TOP);
   textSize(12);
   text("DIFFICULTY: " + difficulty.toUpperCase(), 20, 4);
+  
+  // Credits
+  fill(50, 90, 100);
+  textAlign(RIGHT, TOP);
+  textSize(14);
+  text("CREDITS: " + totalCredits, LOGICAL_WIDTH - 20, 90);
+  
+  // ─── DRAW CONTROLS ───
+  if (joystick) joystick.draw();
+  if (btnDash) btnDash.draw();
+  if (btnPower && queuedPowerup) btnPower.draw(); // Only show power btn when needed
+  
   pop();
 
   let sessionTime = (frameCount - sessionStartFrame) / 60;
@@ -1209,7 +1251,7 @@ function onPlayerHit() {
       bestTime = survivedTime;
     }
 
-    saveHighScore();
+    saveData(); // ✅ SAVE EVERYTHING
 
     // ✅ LOCK GAME STATE
     gameState = "gameOver";
@@ -1403,16 +1445,16 @@ function drawGameOver() {
   fill(0, 0, 90);
   textSize(24);
   text("SCORE: " + floor(score), cx, cy + 30);
-
-  // ─── TIME (RIGHT UNDER SCORE) ───
-  fill(0, 0, 80);
+  
+  // ─── TOTAL CREDITS ───
+  fill(50, 90, 100);
   textSize(20);
-  // text("TIME: " + timeSurvived + "s", cx, cy + 65);
+  text("TOTAL CREDITS: " + totalCredits, cx, cy + 70);
 
   // ─── CONTROLS ───
   fill(0, 0, 60);
   textSize(16);
-  text("Press R to Retry | Press M for Menu", cx, cy + 110);
+  text("Press R to Retry | Press M for Menu", cx, cy + 120);
 
   // ─── CREDITS ───
   fill(0, 0, 90);
@@ -1478,9 +1520,7 @@ window.mousePressed = mousePressed;
 window.keyPressed = keyPressed;
 
 // Touch Variables
-let touchStartX = 0;
-let touchStartY = 0;
-let isTouchingLeft = false;
+// (Handled by VirtualJoystick/TouchButton classes now)
 
 window.touchStarted = function() {
   if (getAudioContext().state !== 'running') {
@@ -1498,40 +1538,39 @@ window.touchStarted = function() {
     mousePressed();
     return false;
   }
-
-  // In Game: Split screen controls
-  // Left half = Joystick
-  if (mouseX < windowWidth / 2) {
-    touchStartX = mouseX;
-    touchStartY = mouseY;
-    isTouchingLeft = true;
-  } 
-  // Right half = Action (Powerup / Dash)
-  else {
-    // Tap right side to use powerup
-    if (queuedPowerup) {
-      activatePowerup(queuedPowerup);
-    }
+  
+  // Game Logic
+  // Iterate touches
+  for (let i = 0; i < touches.length; i++) {
+      let t = touches[i];
+      let tx = (t.x - offsetX) / gameScale;
+      let ty = (t.y - offsetY) / gameScale;
+      
+      if (joystick && !joystick.active) {
+          if (joystick.start(t.id, tx, ty)) continue;
+      }
+      if (btnDash && !btnDash.active) {
+          if (btnDash.start(t.id, tx, ty)) continue;
+      }
+      if (btnPower && !btnPower.active && queuedPowerup) {
+          if (btnPower.start(t.id, tx, ty)) continue;
+      }
   }
+
   return false;
 }
 
 window.touchMoved = function() {
   if (gameState !== "playing") return false;
 
-  if (isTouchingLeft) {
-    let dx = mouseX - touchStartX;
-    let dy = mouseY - touchStartY;
-    
-    // Sensitivity factor
-    const sensitivity = 0.2;
-
-    player.vx += dx * sensitivity;
-    player.vy += dy * sensitivity;
-
-    // Reset start to current to avoid "runaway" acceleration
-    touchStartX = mouseX;
-    touchStartY = mouseY;
+  for (let i = 0; i < touches.length; i++) {
+      let t = touches[i];
+      let tx = (t.x - offsetX) / gameScale;
+      let ty = (t.y - offsetY) / gameScale;
+      
+      if (joystick && joystick.id === t.id) {
+          joystick.move(tx, ty);
+      }
   }
   return false;
 }
@@ -1539,10 +1578,21 @@ window.touchMoved = function() {
 window.touchEnded = function() {
   if (gameState !== "playing") return false;
   
-  // Simple release check
-  // Note: multi-touch logic is complex in p5 global mode, 
-  // this assumes single touch for movement mainly.
-  isTouchingLeft = false;
+  // Find which touch ended is tricky in p5 global without touch ID events in touchEnded
+  // We scan existing touches and see which ID is missing from our active objects
+  
+  let currentIds = touches.map(t => t.id);
+  
+  if (joystick && joystick.active && !currentIds.includes(joystick.id)) {
+      joystick.end(joystick.id);
+  }
+  if (btnDash && btnDash.active && !currentIds.includes(btnDash.id)) {
+      btnDash.end(btnDash.id);
+  }
+  if (btnPower && btnPower.active && !currentIds.includes(btnPower.id)) {
+      btnPower.end(btnPower.id);
+  }
+
   return false;
 }
 
@@ -1717,7 +1767,6 @@ function keyPressed() {
 
     // Use Powerup
     else if (keyCode === 32) {
-      // Space
       if (queuedPowerup) {
         activatePowerup(queuedPowerup);
       }
@@ -1725,30 +1774,7 @@ function keyPressed() {
 
     // DASH
     else if (keyCode === SHIFT) {
-      if (dashCooldown === 0) {
-        dashDuration = dashDurationMax;
-        dashCooldown = difficulties[difficulty].dashCooldownMax;
-
-        let ix = 0,
-          iy = 0;
-        if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
-        if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
-        if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
-        if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
-
-        if (ix !== 0 || iy !== 0) {
-          let mag = sqrt(ix * ix + iy * iy);
-          ix /= mag;
-          iy /= mag;
-
-          // ✅ FIXED DASH (NO *2 TELEPORT)
-          player.vx += ix * dashPower;
-          player.vy += iy * dashPower;
-        }
-
-        flashAlpha = 120;
-        screenShake = max(screenShake, 8);
-      }
+      performDash();
     }
 
     // Restart
@@ -1793,6 +1819,44 @@ function keyPressed() {
       hardRestartGame();
     }
   }
+}
+
+// Extracted Dash Logic for re-use
+function performDash() {
+    if (dashCooldown === 0) {
+        dashDuration = dashDurationMax;
+        dashCooldown = difficulties[difficulty].dashCooldownMax;
+
+        let ix = 0,
+          iy = 0;
+          
+        // Combine Keyboard + Joystick Input
+        if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
+        if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
+        if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
+        if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
+        
+        if (joystick && joystick.active) {
+            ix += joystick.inputX;
+            iy += joystick.inputY;
+        }
+
+        if (ix !== 0 || iy !== 0) {
+          // Normalize if length > 1 (so diagonal isn't faster, 
+          // though inputX/Y from joystick is already normalized to 1 max)
+          let mag = sqrt(ix * ix + iy * iy);
+          if (mag > 0) {
+             ix /= mag;
+             iy /= mag;
+          }
+
+          player.vx += ix * dashPower;
+          player.vy += iy * dashPower;
+        }
+
+        flashAlpha = 120;
+        screenShake = max(screenShake, 8);
+      }
 }
 
 function startGame() {
@@ -1884,17 +1948,20 @@ function drawPausedOverlay() {
   pop();
 }
 
-function loadHighScore() {
+function loadData() {
   let savedScore = localStorage.getItem("tot_highscore");
   let savedTime = localStorage.getItem("tot_besttime");
+  let savedCredits = localStorage.getItem("tot_credits");
 
   if (savedScore !== null) highScore = parseInt(savedScore);
   if (savedTime !== null) bestTime = parseInt(savedTime);
+  if (savedCredits !== null) totalCredits = parseInt(savedCredits);
 }
 
-function saveHighScore() {
+function saveData() {
   localStorage.setItem("tot_highscore", highScore);
   localStorage.setItem("tot_besttime", bestTime);
+  localStorage.setItem("tot_credits", totalCredits);
 }
 
 function drawWaitingScreen() {
@@ -2002,18 +2069,143 @@ function drawScanlines() {
   pop();
 }
 
-function updatePageTitle() {
-  let baseTitle = "Trials of Tempo";
-  if (gameState === "playing") {
-    document.title = "▶ " + baseTitle;
-  } else if (gameState === "paused") {
-    document.title = "⏸ PAUSED - " + baseTitle;
-  } else if (gameState === "gameOver") {
-    document.title = "❌ GAME OVER - Score: " + floor(score);
-  } else if (gameState === "victory") {
-    document.title = "🏆 VICTORY - " + baseTitle;
-  } else {
-    document.title = baseTitle;
+// ─── MOBILE CONTROLS CLASSES ───
+class VirtualJoystick {
+  constructor(x, y, r) {
+    this.baseX = x;
+    this.baseY = y;
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.id = -1;
+    this.active = false;
+    this.inputX = 0;
+    this.inputY = 0;
+  }
+
+  start(id, x, y) {
+    // Check distance to base
+    if (dist(x, y, this.baseX, this.baseY) < this.r * 2.0) { // Generous hit area
+      this.id = id;
+      this.active = true;
+      this.move(x, y);
+      return true;
+    }
+    return false;
+  }
+
+  move(x, y) {
+    if (!this.active) return;
+    let dx = x - this.baseX;
+    let dy = y - this.baseY;
+    let d = sqrt(dx*dx + dy*dy);
+    
+    // Clamp stick to radius
+    if (d > this.r) {
+      dx = (dx / d) * this.r;
+      dy = (dy / d) * this.r;
+    }
+    
+    this.x = this.baseX + dx;
+    this.y = this.baseY + dy;
+    
+    // Normalize output -1 to 1
+    this.inputX = dx / this.r;
+    this.inputY = dy / this.r;
+  }
+
+  end(id) {
+    if (this.id === id) {
+      this.active = false;
+      this.id = -1;
+      this.x = this.baseX;
+      this.y = this.baseY;
+      this.inputX = 0;
+      this.inputY = 0;
+    }
+  }
+
+  draw() {
+    push();
+    resetMatrix(); // Draw in screen coordinates
+    
+    // Base
+    noFill();
+    stroke(255, 50);
+    strokeWeight(4);
+    ellipse(this.baseX, this.baseY, this.r * 2); 
+    
+    // Stick
+    fill(255, 100);
+    noStroke();
+    ellipse(this.x, this.y, 50); 
+    pop();
   }
 }
 
+class TouchButton {
+  constructor(label, x, y, r, color, callback) {
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.label = label;
+    this.color = color;
+    this.callback = callback;
+    this.id = -1;
+    this.active = false;
+    this.cooldown = 0;
+  }
+
+  start(id, x, y) {
+    if (dist(x, y, this.x, this.y) < this.r * 1.5) { // Generous hit area
+      this.id = id;
+      this.active = true;
+      if (this.callback) this.callback();
+      return true;
+    }
+    return false;
+  }
+
+  end(id) {
+    if (this.id === id) {
+      this.active = false;
+      this.id = -1;
+    }
+  }
+  
+  update(cd) {
+      this.cooldown = cd || 0;
+  }
+
+  draw() {
+    push();
+    resetMatrix();
+    
+    // Visual logic
+    let displayColor = this.color;
+    if (this.cooldown > 0) {
+        // Desaturate if on cooldown
+        displayColor = color(hue(this.color), 20, 40);
+    } else if (this.active) {
+        // Brighten if pressed
+        displayColor = color(hue(this.color), saturation(this.color), 100);
+    }
+    
+    fill(displayColor);
+    noStroke();
+    ellipse(this.x, this.y, this.r * 2);
+    
+    // Cooldown pie chart overlay
+    if (this.cooldown > 0) {
+        fill(0, 100);
+        arc(this.x, this.y, this.r*2, this.r*2, -HALF_PI, -HALF_PI + (this.cooldown * TWO_PI));
+    }
+    
+    fill(0, 0, 100);
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    textStyle(BOLD);
+    text(this.label, this.x, this.y);
+    pop();
+  }
+}

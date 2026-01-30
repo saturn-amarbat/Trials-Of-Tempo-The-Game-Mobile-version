@@ -19,14 +19,14 @@ To succeed in the mobile market, you must move beyond "fun gameplay" to "systems
 *   **Immediate Action:** Test the current p5.js game in a **Capacitor** or **Cordova** wrapper on a real Android device.
     *   *Risk Check:* Is the audio sync tight? If yes, stick with JS. If no, you **must** port to Unity, Godot, or Flutter (Flame Engine).
 *   **Control Overhaul:**
-    *   Replace Arrow Keys with **Touch Gestures**.
-    *   *Swipe:* Move lanes / Dash.
-    *   *Tap:* Activate Powerup.
-    *   *Virtual Joystick:* Optional, but swipes feel more "native" for lane changers.
+    *   ✅ Replace Arrow Keys with **Touch Gestures**.
+    *   ✅ *Swipe:* Move lanes / Dash. (Implemented as Joystick + Dash Button)
+    *   ✅ *Tap:* Activate Powerup. (Implemented as Button)
+    *   ✅ *Virtual Joystick:* Optional, but swipes feel more "native" for lane changers. (Implemented Visual Joystick)
 
 ### Phase 2: The Metagame (Retention Loop)
 *Why play again?*
-*   **Soft Currency (Credits):** Earned during runs.
+*   **Soft Currency (Credits):** Earned during runs. ✅ (Implemented basic saving)
 *   **Shop System:**
     *   **Upgrades:** Permanent boosts (Start with Shield, Longer Dash, Magnet Radius).
     *   **Cosmetics:** New Ship skins, Trail colors (Visuals = high monetization potential).
