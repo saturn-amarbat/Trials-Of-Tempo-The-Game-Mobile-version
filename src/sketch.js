@@ -36,6 +36,7 @@ let lastGameState = "";
 let introVideo;
 let autoScrollSpeed = 2;
 let songDuration = 236;
+let hitStop = 0;
 
 // ─── PLAYER ───
 let player;
@@ -589,6 +590,13 @@ function drawInstructions() {
 
 // ─── UPDATE & DRAW GAME ───
 function updateGame() {
+  if (hitStop > 0) {
+      hitStop--;
+      // Keep shaking during hitstop for effect
+      if (screenShake > 0) screenShake *= 0.9;
+      return;
+  }
+
   // ✅ CONTINUOUS RAMPING
   // Increase speed by a tiny amount every frame (approx +1 BPM every 10 seconds)
   // Base BPM 90. Target +1 BPM in 600 frames. 1/90 = 0.011 increase in %?
@@ -899,7 +907,42 @@ function drawPlayer() {
   pop();
 }
 
+function drawVignette() {
+    let healthPct = displayedHealth / playerMaxHealth;
+    if (healthPct > 0.4 && !activePowerup) return; // Only draw if damaged or powered up
+
+    push();
+    blendMode(MULTIPLY);
+    
+    let cx = LOGICAL_WIDTH / 2;
+    let cy = LOGICAL_HEIGHT / 2;
+    let maxR = max(LOGICAL_WIDTH, LOGICAL_HEIGHT) * 0.85;
+    
+    // Create gradient
+    let grad = drawingContext.createRadialGradient(cx, cy, maxR * 0.4, cx, cy, maxR);
+    
+    if (healthPct <= 0.4) {
+        // Red pulse
+        let pulse = (sin(frameCount * 0.2) + 1) * 0.5; // 0 to 1
+        let intensity = map(healthPct, 0.4, 0, 0, 0.8) + pulse * 0.2;
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, `rgba(255, 0, 0, ${intensity})`);
+    } else {
+        // Just darkness (optional, but let's keep it clean)
+        grad.addColorStop(0, "rgba(0,0,0,0)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+    }
+
+    drawingContext.fillStyle = grad;
+    rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+    pop();
+    
+    // Reset blend mode
+    blendMode(BLEND);
+}
+
 function drawGameUI() {
+  drawVignette();
   push();
   fill(0, 0, 0, 120);
   noStroke();
@@ -1223,6 +1266,7 @@ function onPlayerHit() {
   hurtTimer = 15;
   flashAlpha = 255;
   screenShake = 25;
+  hitStop = 8; // Freeze frame for impact
   comboMultiplier = 1;
   comboTimer = 0;
 
@@ -1854,10 +1898,45 @@ function performDash() {
 
           player.vx += ix * dashPower;
           player.vy += iy * dashPower;
+
+          // ✨ AAA POLISH: Dash Particle Burst
+          for(let i=0; i<15; i++) {
+             // Spawn particles in opposite direction
+             let px = player.x + random(-10, 10);
+             let py = player.y + random(-10, 10);
+             let pColor = color(300, 60, 100); // Pink/Purple dash color
+             
+             // Create a custom particle for dash
+             particles.push({
+                x: px, y: py,
+                vx: -ix * random(2, 6) + random(-1, 1),
+                vy: -iy * random(2, 6) + random(-1, 1),
+                life: 40, maxLife: 40,
+                color: pColor,
+                update: function() {
+                    this.x += this.vx; 
+                    this.y += this.vy;
+                    this.vx *= 0.9;
+                    this.vy *= 0.9;
+                    this.life--;
+                },
+                draw: function() {
+                    push();
+                    noStroke();
+                    let alpha = map(this.life, 0, this.maxLife, 0, 255);
+                    fill(hue(this.color), saturation(this.color), brightness(this.color), alpha);
+                    // Stretch particle in direction of movement
+                    translate(this.x, this.y);
+                    rotate(atan2(this.vy, this.vx));
+                    ellipse(0, 0, 12 + this.life/2, 4); 
+                    pop();
+                }
+             });
+          }
         }
 
         flashAlpha = 120;
-        screenShake = max(screenShake, 8);
+        screenShake = max(screenShake, 12); // Increased shake
       }
 }
 
