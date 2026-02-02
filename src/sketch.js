@@ -586,6 +586,10 @@ function drawInstructions() {
 }
 
 // ─── UPDATE & DRAW GAME ───
+/**
+ * Main game loop update.
+ * Handles scrolling, speed ramping, and obstacle management.
+ */
 function updateGame() {
   if (hitStop > 0) {
       hitStop--;
@@ -1119,6 +1123,10 @@ class Obstacle {
   }
 }
 
+/**
+ * Spawns an obstacle based on the given type pattern.
+ * @param {string} type - The type of obstacle pattern (e.g., 'single', 'double', 'wave').
+ */
 function spawnObstacle(type) {
   let y = cameraY - 120;
   let x = type === "laser" ? LOGICAL_WIDTH / 2 : random(60, LOGICAL_WIDTH - 60);
@@ -1220,6 +1228,10 @@ function activatePowerup(type) {
 }
 
 // ─── BEAT ───
+/**
+ * Triggered on every beat of the music.
+ * Handles rhythm-based spawning and visual effects.
+ */
 function onBeat() {
   if (gameState !== "playing") return;
   flashAlpha = max(flashAlpha, 15);
@@ -1249,6 +1261,12 @@ function onBeat() {
 }
 
 // ─── COLLISION ───
+/**
+ * Checks for rectangular collision between player and obstacle.
+ * @param {Object} p - The player object with x, y, width, height.
+ * @param {Object} obs - The obstacle object.
+ * @returns {boolean} True if collision detected.
+ */
 function checkCollision(p, obs) {
   return (
     abs(p.x - obs.x) < (p.width + obs.width) / 2 &&
