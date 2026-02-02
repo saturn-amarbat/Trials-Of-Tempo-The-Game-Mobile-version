@@ -1403,10 +1403,17 @@ function spawnExplosionParticle(x, y) {
 
 // ─── BACKGROUND ───
 function drawParallaxBG() {
+  let bgFlash = 0;
+  if (gameState === "playing" && beatInterval > 0) {
+      let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
+      if (beatProgress < 0.2) bgFlash = (1 - beatProgress / 0.2) * 20;
+  }
+
   for (let layer of parallaxLayers) {
     push();
     noStroke();
-    fill(layer.color[0], layer.color[1], layer.color[2], 50);
+    // Add flash to saturation and brightness
+    fill(layer.color[0], layer.color[1] + bgFlash, layer.color[2] + bgFlash, 50);
     let offsetY = (cameraY * layer.speed) % 200;
     for (let y = -200; y < LOGICAL_HEIGHT + 200; y += 200) {
       rect(layer.x || 0, y - offsetY, LOGICAL_WIDTH, 180, 20);
@@ -1425,8 +1432,16 @@ function initParallax() {
 
 function drawAnimatedGrid() {
   push();
-  stroke(rgbHue, 40, 60, 80);
-  strokeWeight(1);
+  
+  let pulse = 0;
+  if (gameState === "playing" && beatInterval > 0) {
+      let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
+      pulse = max(0, 1 - beatProgress); // Decay from 1 to 0
+  }
+  
+  stroke(rgbHue, 40, 60, 40 + pulse * 60);
+  strokeWeight(1 + pulse * 1.5);
+  
   let gridSize = 60;
   let offset = (frameCount * 2 + cameraY * 0.3) % gridSize;
   for (let y = -gridSize; y < LOGICAL_HEIGHT + gridSize; y += gridSize)
