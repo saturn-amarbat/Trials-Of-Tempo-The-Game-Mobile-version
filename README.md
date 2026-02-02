@@ -13,13 +13,14 @@ Built entirely with vanilla JavaScript and p5.js libraries with no build system 
 ## Gameplay Preview
 
 <p align="center">
-  <img src="assets/visuals/gameplay.gif" alt="Gameplay demonstration" width="640">
+  <img src="public/assets/visuals/gameplay.gif" alt="Gameplay demonstration" width="640">
 </p>
 
 ## Key Features
 
 - Dynamic difficulty scaling tied to music tempo and loop count
 - Beat-synchronized obstacle spawning and screen effects
+- **Mobile-First Controls:** Virtual joystick and touch buttons for play on any device
 - Dash mechanic with visual cooldown tracking
 - Powerup system (speed boost, screen-clearing shockwave)
 - Parallax background layers for depth
@@ -31,21 +32,26 @@ Built entirely with vanilla JavaScript and p5.js libraries with no build system 
 - **JavaScript + p5.js** for rendering and game loop
 - **p5.sound** for audio playback and timing synchronization
 - **p5play/Planck.js** for collision detection
-- No build tools or bundlers—runs directly in browser
+- **Vite** for modern local development (optional, works without build steps too)
 
 ## Running Locally
 
-**Requirements:** Python 3 (or any local HTTP server)
+**Requirements:** Node.js (recommended) or any local HTTP server.
 
+**Using Vite (Recommended):**
 ```bash
 git clone https://github.com/saturn-amarbat/Trials-Of-Tempo-The-Game.git
 cd Trials-Of-Tempo-The-Game
+npm install
+npm run dev
+```
+
+**Using Python:**
+```bash
 python3 -m http.server 8000
 ```
 
 Navigate to `http://localhost:8000`. Click once to enable audio, then press any key to skip the intro.
-
-Alternative servers: `npx serve` or `php -S localhost:8000`
 
 ## Controls
 
@@ -66,7 +72,7 @@ Alternative servers: `npx serve` or `php -S localhost:8000`
 
 ## Development Status
 
-Current version is a functional prototype (v0.8). Planned improvements include mobile controls, online leaderboards, additional boss mechanics, and difficulty selection UI.
+Current version is **v1.0 (Mobile Ready)**. Fully playable on desktop and mobile devices with touch support. Planned future updates include online leaderboards and additional song packs.
 
 ## Team
 

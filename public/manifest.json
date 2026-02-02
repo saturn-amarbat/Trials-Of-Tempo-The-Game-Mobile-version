@@ -1,0 +1,17 @@
+{
+  "name": "Trials of Tempo",
+  "short_name": "TrialsOfTempo",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#1a1a1a",
+  "description": "Endless rhythm-action runner. Sync your moves to the beat.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "orientation": "landscape"
+}
