@@ -6,9 +6,10 @@
 
 // Trials of Tempo - Endless Ramping Version last revised by Saturn on Yoshi's beat implementation
 
+import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES } from './Config.js';
+
 // ─── RESOLUTION SETTINGS ───
-const LOGICAL_WIDTH = 960;
-const LOGICAL_HEIGHT = 540;
+// LOGICAL_WIDTH and LOGICAL_HEIGHT imported from Config.js
 let gameScale = 1;
 let offsetX = 0;
 let offsetY = 0;
@@ -43,21 +44,21 @@ let player;
 let playerHealth = 100;
 let playerMaxHealth = 100;
 let playerSpeed = 10;
-const basePlayerSpeed = 10;
+const basePlayerSpeed = GAME_CONSTANTS.PLAYER_BASE_SPEED;
 let playerInvincible = 0;
 let hurtTimer = 0;
 
 // PHYSICS
-let accel = 1;
-let maxVel = 20;
-let drag = 0.9;
+let accel = GAME_CONSTANTS.ACCEL;
+let maxVel = GAME_CONSTANTS.MAX_VEL;
+let drag = GAME_CONSTANTS.DRAG;
 
 // DASH
 let dashCooldown = 0;
 let dashDuration = 0;
-let dashPower = 8;
-let dashCooldownMax = 90;
-let dashDurationMax = 12;
+let dashPower = GAME_CONSTANTS.DASH_POWER;
+let dashCooldownMax = GAME_CONSTANTS.DASH_COOLDOWN_MAX;
+let dashDurationMax = GAME_CONSTANTS.DASH_DURATION_MAX;
 
 // SHOCKWAVE VARIABLES
 let shockwaveActive = false;
@@ -84,11 +85,7 @@ let musicSessionID = 0; // ✅ invalidates all old music loops
 
 // ─── DIFFICULTY ───
 let difficulty = "normal";
-const difficulties = {
-  easy: { damage: 15, dashCooldownMax: 70 },
-  normal: { damage: 25, dashCooldownMax: 90 },
-  hard: { damage: 35, dashCooldownMax: 110 },
-};
+const difficulties = DIFFICULTIES;
 
 function framesPerBeat(bpmValue) {
   return floor(3600 / bpmValue);
