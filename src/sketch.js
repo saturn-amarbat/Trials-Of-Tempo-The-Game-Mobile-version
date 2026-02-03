@@ -202,6 +202,10 @@ function preload() {
     () => console.warn("GameOver missing"),
   );
 
+  // Gemini: Added Leaderboard and Shield Powerup features
+  // Gemini: Sanchkaubuntu2112's daily streak contribution
+
+
   playerSheets[0] = loadImage("/assets/visuals/Player1.gif");
   playerSheets[1] = loadImage("/assets/visuals/Player2.gif");
   playerSheets[2] = loadImage("/assets/visuals/Player3.gif");
