@@ -7,6 +7,7 @@
 // Trials of Tempo - Endless Ramping Version last revised by Saturn on Yoshi's beat implementation
 
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES } from './Config.js';
+import { Leaderboard } from './Leaderboard.js';
 
 // ─── RESOLUTION SETTINGS ───
 // LOGICAL_WIDTH and LOGICAL_HEIGHT imported from Config.js
@@ -141,6 +142,7 @@ let displayedHealth = 100;
 let highScore = 0;
 let bestTime = 0;
 let totalCredits = 0;
+let leaderboard;
 
 // ─── MOBILE CONTROLS ───
 // VirtualJoystick instance for left-hand movement
@@ -210,6 +212,7 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   calculateGameScale();
   loadData();
+  leaderboard = new Leaderboard();
   colorMode(HSB, 360, 100, 100, 255);
   textFont("Rajdhani");
   beatInterval = framesPerBeat(bpm);
@@ -329,6 +332,9 @@ function draw() {
     case "instructions":
       drawInstructions();
       break;
+    case "leaderboard":
+      drawLeaderboard();
+      break;
     case "playing":
       updateGame();
       drawGame();
@@ -434,6 +440,15 @@ function drawTitle() {
     "INSTRUCTIONS",
     LOGICAL_WIDTH / 2,
     LOGICAL_HEIGHT / 2 + 160,
+    300,
+    50,
+    mx,
+    my,
+  );
+  drawMenuButton(
+    "LEADERBOARD",
+    LOGICAL_WIDTH / 2,
+    LOGICAL_HEIGHT / 2 + 220,
     300,
     50,
     mx,
@@ -578,6 +593,66 @@ function drawInstructions() {
     "BACK",
     LOGICAL_WIDTH - 100,
     LOGICAL_HEIGHT - 50,
+    160,
+    36,
+    mx,
+    my,
+  );
+}
+
+function drawLeaderboard() {
+  fill(20, 80, 10);
+  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  drawParallaxBG();
+
+  fill(rgbHue, 90, 100);
+  textAlign(CENTER, CENTER);
+  textSize(48);
+  text("LEADERBOARD", LOGICAL_WIDTH / 2, 80);
+
+  let scores = leaderboard.getScores();
+  let startY = 160;
+  
+  textAlign(LEFT, CENTER);
+  textSize(24);
+
+  // Headers
+  fill(0, 0, 60);
+  text("RANK", LOGICAL_WIDTH / 2 - 200, startY - 40);
+  text("NAME", LOGICAL_WIDTH / 2 - 100, startY - 40);
+  textAlign(RIGHT, CENTER);
+  text("SCORE", LOGICAL_WIDTH / 2 + 200, startY - 40);
+
+  for (let i = 0; i < scores.length; i++) {
+    let s = scores[i];
+    let y = startY + i * 40;
+    
+    // Rank
+    textAlign(LEFT, CENTER);
+    if (i === 0) fill(50, 90, 100); // Gold
+    else if (i === 1) fill(0, 0, 90); // Silver
+    else if (i === 2) fill(30, 60, 80); // Bronze
+    else fill(0, 0, 70);
+    
+    text("#" + (i + 1), LOGICAL_WIDTH / 2 - 200, y);
+
+    // Name
+    fill(0, 0, 90);
+    text(s.name, LOGICAL_WIDTH / 2 - 100, y);
+
+    // Score
+    textAlign(RIGHT, CENTER);
+    fill(120, 80, 100);
+    text(s.score, LOGICAL_WIDTH / 2 + 200, y);
+  }
+
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+  drawMenuButton(
+    "BACK",
+    LOGICAL_WIDTH / 2,
+    LOGICAL_HEIGHT - 80,
     160,
     36,
     mx,
@@ -1134,9 +1209,11 @@ function spawnObstacle(type) {
 }
 
 function spawnPowerup() {
-  // RANDOM POOL: Speed (50%) or Shockwave (50%)
-  // Shield is removed.
-  let type = random() < 0.5 ? "speed" : "shockwave";
+  // RANDOM POOL: Speed, Shockwave, or Shield
+  let r = random();
+  let type = "speed";
+  if (r < 0.33) type = "shockwave";
+  else if (r < 0.66) type = "shield";
 
   powerups.push({
     x: random(60, LOGICAL_WIDTH - 60),
@@ -1160,7 +1237,18 @@ function drawPowerup(pow) {
   let pulseSize = 36 + sin(frameCount * 0.1) * 4;
 
   if (pow.type === "shield" && powerupShield) {
-    // Shield Logic Removed/Hidden
+    imageMode(CENTER);
+    tint(180, 255, 255, 200);
+    image(powerupShield, 0, 0, pulseSize, pulseSize);
+    noTint();
+  } else if (pow.type === "shield") {
+    // Fallback if image missing
+    noStroke();
+    fill(180, 80, 100); // Cyan
+    ellipse(0, 0, 30, 30);
+    stroke(180, 80, 100);
+    noFill();
+    ellipse(0, 0, pulseSize, pulseSize);
   } else if (pow.type === "speed" && powerupSpeed) {
     imageMode(CENTER);
     tint(255, 255, 100, 150);
@@ -1221,6 +1309,8 @@ function activatePowerup(type) {
   powerupDuration = 300;
   if (type === "speed") {
     if (sfxJetPower && sfxJetPower.isLoaded()) sfxJetPower.play();
+  } else if (type === "shield") {
+    if (sfxPowerUp && sfxPowerUp.isLoaded()) sfxPowerUp.play();
   }
   flashAlpha = 120;
   comboMultiplier++;
@@ -1312,6 +1402,9 @@ function onPlayerHit() {
     if (survivedTime > bestTime) {
       bestTime = survivedTime;
     }
+
+    // Add to Leaderboard
+    leaderboard.addScore("Player " + floor(random(1000)), floor(score));
 
     saveData(); // ✅ SAVE EVERYTHING
 
@@ -1705,6 +1798,10 @@ function mousePressed() {
       // INSTRUCTIONS Button (Center H/2 + 160, Height 50) -> Range approx 135 to 185
       else if (my > LOGICAL_HEIGHT / 2 + 135 && my < LOGICAL_HEIGHT / 2 + 185)
         gameState = "instructions";
+      
+      // LEADERBOARD Button (Center H/2 + 220, Height 50) -> Range approx 195 to 245
+      else if (my > LOGICAL_HEIGHT / 2 + 195 && my < LOGICAL_HEIGHT / 2 + 245)
+        gameState = "leaderboard";
     }
   } else if (gameState === "customize") {
     let startX = LOGICAL_WIDTH / 2 - 180;
@@ -1730,6 +1827,16 @@ function mousePressed() {
       mx < LOGICAL_WIDTH - 20 &&
       my > LOGICAL_HEIGHT - 68 &&
       my < LOGICAL_HEIGHT - 32
+    ) {
+      gameState = "title";
+      if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
+    }
+  } else if (gameState === "leaderboard") {
+    if (
+      mx > LOGICAL_WIDTH / 2 - 80 &&
+      mx < LOGICAL_WIDTH / 2 + 80 &&
+      my > LOGICAL_HEIGHT - 98 &&
+      my < LOGICAL_HEIGHT - 62
     ) {
       gameState = "title";
       if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
