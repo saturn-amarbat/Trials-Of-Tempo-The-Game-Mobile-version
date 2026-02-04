@@ -15,7 +15,7 @@ let gameScale = 1;
 let offsetX = 0;
 let offsetY = 0;
 
-let lastDir = "right";
+let lastDir = 'right';
 let frameIndex = 0;
 let frameTimer = 0;
 let frameDelay = 6;
@@ -33,8 +33,8 @@ let shadowSprite, highlightSprite;
 let sfxButton, sfxJet, sfxJetPower, sfxPowerUp, sfxDamage, sfxGameOver;
 
 // ─── GAME STATE ───
-let gameState = "waitingForInput";
-let lastGameState = "";
+let gameState = 'waitingForInput';
+let lastGameState = '';
 let introVideo;
 let autoScrollSpeed = 2;
 let songDuration = 236;
@@ -85,7 +85,7 @@ let lastMusicBeatTime = 0;
 let musicSessionID = 0; // ✅ invalidates all old music loops
 
 // ─── DIFFICULTY ───
-let difficulty = "normal";
+let difficulty = 'normal';
 const difficulties = DIFFICULTIES;
 
 function framesPerBeat(bpmValue) {
@@ -95,12 +95,12 @@ function framesPerBeat(bpmValue) {
 function applyDifficultyFromURL() {
   try {
     const params = new URLSearchParams(window.location.search);
-    const d = (params.get("difficulty") || "").toLowerCase();
+    const d = (params.get('difficulty') || '').toLowerCase();
     if (d && difficulties[d]) {
       difficulty = d;
     }
   } catch (e) {
-    console.warn("Difficulty parse failed", e);
+    console.warn('Difficulty parse failed', e);
   }
 }
 applyDifficultyFromURL();
@@ -153,63 +153,62 @@ let btnPower;
 
 function preload() {
   titleSong = loadSound(
-    "/assets/audio/Unused-Assets.mp3",
+    '/assets/audio/Unused-Assets.mp3',
     () => {},
-    () => console.warn("Title missing"),
+    () => console.warn('Title missing')
   );
   // gameSong = loadSound("Yellow-and-Purple.mp3", () => {}, () => console.warn("Main music missing"));
   gameIntroSong = loadSound(
-    "/assets/audio/Yellow-and-Purple1.mp3",
+    '/assets/audio/Yellow-and-Purple1.mp3',
     () => {},
-    () => console.warn("First music missing"),
+    () => console.warn('First music missing')
   );
   gameLoopSong = loadSound(
-    "/assets/audio/Yellow-and-Purple2.mp3",
+    '/assets/audio/Yellow-and-Purple2.mp3',
     () => {},
-    () => console.warn("Loop music missing"),
+    () => console.warn('Loop music missing')
   );
   // gameIntroSong = loadSound("Yellow-and-Purple(first).mp3");
   // gameLoopSong  = loadSound("Yellow-and-Purple(loop).mp3");
 
   sfxButton = loadSound(
-    "/assets/audio/ButtonPress.mp3",
+    '/assets/audio/ButtonPress.mp3',
     () => {},
-    () => console.warn("ButtonPress missing"),
+    () => console.warn('ButtonPress missing')
   );
   sfxJet = loadSound(
-    "/assets/audio/JetEngine.mp3",
+    '/assets/audio/JetEngine.mp3',
     () => {},
-    () => console.warn("JetEngine missing"),
+    () => console.warn('JetEngine missing')
   );
   sfxJetPower = loadSound(
-    "/assets/audio/JetEnginePoweredUp.mp3",
+    '/assets/audio/JetEnginePoweredUp.mp3',
     () => {},
-    () => console.warn("JetPower missing"),
+    () => console.warn('JetPower missing')
   );
   sfxPowerUp = loadSound(
-    "/assets/audio/PowerUp.mp3",
+    '/assets/audio/PowerUp.mp3',
     () => {},
-    () => console.warn("PowerUp missing"),
+    () => console.warn('PowerUp missing')
   );
   sfxDamage = loadSound(
-    "/assets/audio/Damage.mp3",
+    '/assets/audio/Damage.mp3',
     () => {},
-    () => console.warn("Damage missing"),
+    () => console.warn('Damage missing')
   );
   sfxGameOver = loadSound(
-    "/assets/audio/GameOver.mp3",
+    '/assets/audio/GameOver.mp3',
     () => {},
-    () => console.warn("GameOver missing"),
+    () => console.warn('GameOver missing')
   );
 
   // Gemini: Added Leaderboard and Shield Powerup features
   // Gemini: Sanchkaubuntu2112's daily streak contribution
 
-
-  playerSheets[0] = loadImage("/assets/visuals/Player1.gif");
-  playerSheets[1] = loadImage("/assets/visuals/Player2.gif");
-  playerSheets[2] = loadImage("/assets/visuals/Player3.gif");
-  playerSheets[3] = loadImage("/assets/visuals/Player4.gif");
+  playerSheets[0] = loadImage('/assets/visuals/Player1.gif');
+  playerSheets[1] = loadImage('/assets/visuals/Player2.gif');
+  playerSheets[2] = loadImage('/assets/visuals/Player3.gif');
+  playerSheets[3] = loadImage('/assets/visuals/Player4.gif');
 }
 
 function setup() {
@@ -218,21 +217,35 @@ function setup() {
   loadData();
   leaderboard = new Leaderboard();
   colorMode(HSB, 360, 100, 100, 255);
-  textFont("Rajdhani");
+  textFont('Rajdhani');
   beatInterval = framesPerBeat(bpm);
   initParallax();
   resetPlayer();
 
   // Initialize Mobile Controls
   joystick = new VirtualJoystick(120, LOGICAL_HEIGHT - 120, 70);
-  
-  btnDash = new TouchButton("DASH", LOGICAL_WIDTH - 100, LOGICAL_HEIGHT - 100, 45, color(320, 80, 100), () => {
+
+  btnDash = new TouchButton(
+    'DASH',
+    LOGICAL_WIDTH - 100,
+    LOGICAL_HEIGHT - 100,
+    45,
+    color(320, 80, 100),
+    () => {
       performDash();
-  });
-  
-  btnPower = new TouchButton("PWR", LOGICAL_WIDTH - 220, LOGICAL_HEIGHT - 80, 35, color(180, 80, 100), () => {
+    }
+  );
+
+  btnPower = new TouchButton(
+    'PWR',
+    LOGICAL_WIDTH - 220,
+    LOGICAL_HEIGHT - 80,
+    35,
+    color(180, 80, 100),
+    () => {
       if (queuedPowerup) activatePowerup(queuedPowerup);
-  });
+    }
+  );
 
   // Hide loading screen
   const loadingScreen = document.getElementById('loading');
@@ -241,7 +254,7 @@ function setup() {
     setTimeout(() => loadingScreen.remove(), 500);
   }
 
-  introVideo = createVideo("/assets/visuals/Opening.mp4");
+  introVideo = createVideo('/assets/visuals/Opening.mp4');
   introVideo.size(LOGICAL_WIDTH, LOGICAL_HEIGHT);
   introVideo.hide(); // draw manually
   introVideo.volume(0.6);
@@ -277,7 +290,7 @@ function draw() {
   translate(offsetX, offsetY);
   scale(gameScale);
 
-  if (gameState === "playing") {
+  if (gameState === 'playing') {
     let activeSong = null;
 
     if (gameIntroSong && gameIntroSong.isPlaying()) {
@@ -305,10 +318,7 @@ function draw() {
 
   push();
   if (screenShake > 0) {
-    translate(
-      random(-screenShake, screenShake),
-      random(-screenShake, screenShake),
-    );
+    translate(random(-screenShake, screenShake), random(-screenShake, screenShake));
   }
 
   if (gameState !== lastGameState) {
@@ -317,43 +327,43 @@ function draw() {
   }
 
   switch (gameState) {
-    case "waitingForInput":
+    case 'waitingForInput':
       drawWaitingScreen();
       break;
-    case "intro":
+    case 'intro':
       drawIntro();
       break;
-    case "title":
+    case 'title':
       drawTitle();
       break;
-    case "levelSelect":
-      gameState = "playing";
+    case 'levelSelect':
+      gameState = 'playing';
       break;
 
-    case "customize":
+    case 'customize':
       drawCustomize();
       break;
-    case "instructions":
+    case 'instructions':
       drawInstructions();
       break;
-    case "leaderboard":
+    case 'leaderboard':
       drawLeaderboard();
       break;
-    case "playing":
+    case 'playing':
       updateGame();
       drawGame();
       break;
-    case "paused":
+    case 'paused':
       drawGame();
       drawPausedOverlay();
       break;
-    case "gameOver":
+    case 'gameOver':
       drawGameOver();
       break;
-    case "victory":
+    case 'victory':
       drawVictory();
       break;
-    case "credits":
+    case 'credits':
       drawCredits();
       break;
   }
@@ -381,101 +391,67 @@ function drawTitle() {
 
   drawParallaxBG();
   drawAnimatedGrid();
-  
-  if (titleSong && titleSong.isLoaded() && !titleSong.isPlaying())
-    titleSong.loop();
+
+  if (titleSong && titleSong.isLoaded() && !titleSong.isPlaying()) titleSong.loop();
   if (gameIntroSong && gameIntroSong.isPlaying()) gameIntroSong.stop();
   if (gameLoopSong && gameLoopSong.isPlaying()) gameLoopSong.stop();
 
   push();
   translate(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 3);
-  
+
   // Floating Title
   let floatY = sin(frameCount * 0.05) * 10;
   translate(0, floatY);
-  
+
   scale(pulseScale);
-  
+
   // Shadow
   fill(bgHue, 90, 50);
   textAlign(CENTER, CENTER);
   textSize(64);
   textStyle(BOLD);
-  text("TRIALS OF TEMPO", 4, 4);
-  
+  text('TRIALS OF TEMPO', 4, 4);
+
   // Main Text
   fill(rgbHue, 90, 100);
-  text("TRIALS OF TEMPO", 0, 0);
-  
+  text('TRIALS OF TEMPO', 0, 0);
+
   // Glitch effect on title
   if (frameCount % 60 < 5) {
-      fill(255);
-      text("TRIALS OF TEMPO", random(-2, 2), random(-2, 2));
+    fill(255);
+    text('TRIALS OF TEMPO', random(-2, 2), random(-2, 2));
   }
   pop();
 
   fill(0, 0, 90);
   textSize(18);
   textAlign(CENTER, CENTER);
-  text("Endless Rhythm Adventure", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 30);
+  text('Endless Rhythm Adventure', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 30);
 
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
 
-  drawMenuButton(
-    "START",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 40,
-    300,
-    50,
-    mx,
-    my,
-  );
-  drawMenuButton(
-    "CUSTOMIZE",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 100,
-    300,
-    50,
-    mx,
-    my,
-  );
-  drawMenuButton(
-    "INSTRUCTIONS",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 160,
-    300,
-    50,
-    mx,
-    my,
-  );
-  drawMenuButton(
-    "LEADERBOARD",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 220,
-    300,
-    50,
-    mx,
-    my,
-  );
+  drawMenuButton('START', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 40, 300, 50, mx, my);
+  drawMenuButton('CUSTOMIZE', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100, 300, 50, mx, my);
+  drawMenuButton('INSTRUCTIONS', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 160, 300, 50, mx, my);
+  drawMenuButton('LEADERBOARD', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 220, 300, 50, mx, my);
 
   // Stats Display
   fill(0, 0, 90);
   textSize(24);
-  text("HIGH SCORE: " + highScore, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80);
-  
+  text('HIGH SCORE: ' + highScore, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80);
+
   fill(50, 90, 100);
   textSize(20);
-  text("CREDITS: " + totalCredits, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 55);
+  text('CREDITS: ' + totalCredits, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 55);
 
   fill(0, 0, 60);
   textSize(12);
-  text("Music by Cacola", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 20);
+  text('Music by Cacola', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 20);
 }
 
 function drawMenuButton(label, x, y, w, h, mx, my) {
-  let hover =
-    mx > x - w / 2 && mx < x + w / 2 && my > y - h / 2 && my < y + h / 2;
+  let hover = mx > x - w / 2 && mx < x + w / 2 && my > y - h / 2 && my < y + h / 2;
   push();
   rectMode(CENTER);
   noStroke();
@@ -498,7 +474,7 @@ function drawCustomize() {
   fill(rgbHue, 90, 100);
   textAlign(CENTER, CENTER);
   textSize(48);
-  text("CUSTOMIZE", LOGICAL_WIDTH / 2, 80);
+  text('CUSTOMIZE', LOGICAL_WIDTH / 2, 80);
 
   let startX = LOGICAL_WIDTH / 2 - 180;
   let mx = getLogicalMouseX();
@@ -511,15 +487,7 @@ function drawCustomize() {
     let hover = dist(mx, my, x, y) < 50;
     drawCharacterPreview(i, x, y, selected || hover);
   }
-  drawMenuButton(
-    "BACK",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT - 80,
-    160,
-    36,
-    mx,
-    my,
-  );
+  drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 160, 36, mx, my);
 }
 
 function drawCharacterPreview(charIndex, x, y, highlighted) {
@@ -549,7 +517,7 @@ function drawInstructions() {
   fill(rgbHue, 90, 100);
   textAlign(CENTER, CENTER);
   textSize(48);
-  text("HOW TO PLAY", LOGICAL_WIDTH / 2, 80);
+  text('HOW TO PLAY', LOGICAL_WIDTH / 2, 80);
 
   fill(0, 0, 90);
   textSize(16);
@@ -559,49 +527,41 @@ function drawInstructions() {
   let y = 150;
   let lineHeight = 34;
 
-  text("CONTROLS:", x, y);
+  text('CONTROLS:', x, y);
   y += lineHeight;
 
   fill(0, 0, 80);
-  text("JOYSTICK / WASD - Move", x + 20, y);
+  text('JOYSTICK / WASD - Move', x + 20, y);
   y += lineHeight;
-  text("DASH BTN / SHIFT - Dash", x + 20, y);
+  text('DASH BTN / SHIFT - Dash', x + 20, y);
   y += lineHeight;
-  text("PWR BTN / SPACE - Use Powerup", x + 20, y);
+  text('PWR BTN / SPACE - Use Powerup', x + 20, y);
   y += lineHeight + 10;
 
   fill(0, 0, 90);
-  text("OBJECTIVE:", x, y);
+  text('OBJECTIVE:', x, y);
   y += lineHeight;
 
   fill(0, 0, 80);
-  text("- Dodge obstacles to the beat", x + 20, y);
+  text('- Dodge obstacles to the beat', x + 20, y);
   y += lineHeight;
-  text("- Collect powerups & gems", x + 20, y);
+  text('- Collect powerups & gems', x + 20, y);
   y += lineHeight;
-  text("- Survive as long as possible", x + 20, y);
+  text('- Survive as long as possible', x + 20, y);
   y += lineHeight + 10;
 
   fill(0, 0, 90);
-  text("TIPS:", x, y);
+  text('TIPS:', x, y);
   y += lineHeight;
 
   fill(0, 0, 80);
-  text("- Stay moving to avoid traps", x + 20, y);
+  text('- Stay moving to avoid traps', x + 20, y);
   y += lineHeight;
-  text("- Use dash to escape tight gaps", x + 20, y);
+  text('- Use dash to escape tight gaps', x + 20, y);
 
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
-  drawMenuButton(
-    "BACK",
-    LOGICAL_WIDTH - 100,
-    LOGICAL_HEIGHT - 50,
-    160,
-    36,
-    mx,
-    my,
-  );
+  drawMenuButton('BACK', LOGICAL_WIDTH - 100, LOGICAL_HEIGHT - 50, 160, 36, mx, my);
 }
 
 function drawLeaderboard() {
@@ -613,33 +573,36 @@ function drawLeaderboard() {
   fill(rgbHue, 90, 100);
   textAlign(CENTER, CENTER);
   textSize(48);
-  text("LEADERBOARD", LOGICAL_WIDTH / 2, 80);
+  text('LEADERBOARD', LOGICAL_WIDTH / 2, 80);
 
   let scores = leaderboard.getScores();
   let startY = 160;
-  
+
   textAlign(LEFT, CENTER);
   textSize(24);
 
   // Headers
   fill(0, 0, 60);
-  text("RANK", LOGICAL_WIDTH / 2 - 200, startY - 40);
-  text("NAME", LOGICAL_WIDTH / 2 - 100, startY - 40);
+  text('RANK', LOGICAL_WIDTH / 2 - 200, startY - 40);
+  text('NAME', LOGICAL_WIDTH / 2 - 100, startY - 40);
   textAlign(RIGHT, CENTER);
-  text("SCORE", LOGICAL_WIDTH / 2 + 200, startY - 40);
+  text('SCORE', LOGICAL_WIDTH / 2 + 200, startY - 40);
 
   for (let i = 0; i < scores.length; i++) {
     let s = scores[i];
     let y = startY + i * 40;
-    
+
     // Rank
     textAlign(LEFT, CENTER);
-    if (i === 0) fill(50, 90, 100); // Gold
-    else if (i === 1) fill(0, 0, 90); // Silver
-    else if (i === 2) fill(30, 60, 80); // Bronze
+    if (i === 0)
+      fill(50, 90, 100); // Gold
+    else if (i === 1)
+      fill(0, 0, 90); // Silver
+    else if (i === 2)
+      fill(30, 60, 80); // Bronze
     else fill(0, 0, 70);
-    
-    text("#" + (i + 1), LOGICAL_WIDTH / 2 - 200, y);
+
+    text('#' + (i + 1), LOGICAL_WIDTH / 2 - 200, y);
 
     // Name
     fill(0, 0, 90);
@@ -653,15 +616,7 @@ function drawLeaderboard() {
 
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
-  drawMenuButton(
-    "BACK",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT - 80,
-    160,
-    36,
-    mx,
-    my,
-  );
+  drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 160, 36, mx, my);
 }
 
 // ─── UPDATE & DRAW GAME ───
@@ -671,10 +626,10 @@ function drawLeaderboard() {
  */
 function updateGame() {
   if (hitStop > 0) {
-      hitStop--;
-      // Keep shaking during hitstop for effect
-      if (screenShake > 0) screenShake *= 0.9;
-      return;
+    hitStop--;
+    // Keep shaking during hitstop for effect
+    if (screenShake > 0) screenShake *= 0.9;
+    return;
   }
 
   // ✅ CONTINUOUS RAMPING
@@ -682,15 +637,15 @@ function updateGame() {
   // Base BPM 90. Target +1 BPM in 600 frames. 1/90 = 0.011 increase in %?
   // 90 * (1 + x) = 91 => 1+x = 91/90 => x = 1/90 approx 0.011.
   // Per frame (60fps) => 0.011 / 600 = 0.000018
-  
-  if (gameState === "playing") {
-      musicSpeed += 0.00005; 
-      musicSpeed = min(musicSpeed, 2.5); // Cap at 2.5x speed (225 BPM)
+
+  if (gameState === 'playing') {
+    musicSpeed += 0.00005;
+    musicSpeed = min(musicSpeed, 2.5); // Cap at 2.5x speed (225 BPM)
   }
 
   bpm = 90 * musicSpeed;
   bpm = constrain(bpm, 90, 225);
-  
+
   autoScrollSpeed = 2 * musicSpeed; // Linear relation for smoothness
   beatInterval = framesPerBeat(bpm);
 
@@ -702,9 +657,9 @@ function updateGame() {
   else if (gameLoopSong && gameLoopSong.isPlaying()) activeSong = gameLoopSong;
 
   if (activeSong) {
-      // Only update rate if it changed significantly to avoid audio artifacts? 
-      // Actually p5.sound handles it, but let's just set it.
-      activeSong.rate(musicSpeed);
+    // Only update rate if it changed significantly to avoid audio artifacts?
+    // Actually p5.sound handles it, but let's just set it.
+    activeSong.rate(musicSpeed);
   }
 
   // PHYSICS SCALING
@@ -713,7 +668,7 @@ function updateGame() {
   maxVel = 20 * bpmFactor;
 
   let targetSpeed = basePlayerSpeed + autoScrollSpeed * 1.5;
-  if (activePowerup === "speed") targetSpeed += 5;
+  if (activePowerup === 'speed') targetSpeed += 5;
   playerSpeed = lerp(playerSpeed, targetSpeed, 0.05);
 
   // ─── KEYBOARD MOVEMENT ───
@@ -721,14 +676,18 @@ function updateGame() {
   if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) player.vy += accel;
   if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) player.vx -= accel;
   if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) player.vx += accel;
-  
+
   // ─── JOYSTICK MOVEMENT ───
   if (joystick && joystick.active) {
-      player.vx += joystick.inputX * accel * 1.5; // Multiplier for feel
-      player.vy += joystick.inputY * accel * 1.5;
+    player.vx += joystick.inputX * accel * 1.5; // Multiplier for feel
+    player.vy += joystick.inputY * accel * 1.5;
   }
 
-  if ((keyIsDown(UP_ARROW) || keyIsDown(87) || (joystick && joystick.inputY < -0.2)) && sfxJet && sfxJet.isLoaded()) {
+  if (
+    (keyIsDown(UP_ARROW) || keyIsDown(87) || (joystick && joystick.inputY < -0.2)) &&
+    sfxJet &&
+    sfxJet.isLoaded()
+  ) {
     if (!sfxJet.isPlaying()) sfxJet.loop();
   } else {
     if (sfxJet && sfxJet.isPlaying()) sfxJet.stop();
@@ -741,7 +700,7 @@ function updateGame() {
     player.vy *= 1.08;
   }
   if (dashCooldown > 0) dashCooldown--;
-  
+
   // Update Buttons
   if (btnDash) btnDash.update(dashCooldown / difficulties[difficulty].dashCooldownMax);
 
@@ -784,13 +743,13 @@ function updateGame() {
       continue;
     }
     if (playerInvincible === 0 && checkCollision(player, obs)) {
-      if (activePowerup === "shield") {
+      if (activePowerup === 'shield') {
         activePowerup = null;
         powerupDuration = 0;
         flashAlpha = 100;
         let points = 50 * comboMultiplier;
         score += points;
-        spawnFloatingText(obs.x, obs.y, "+" + points, color(120, 80, 100));
+        spawnFloatingText(obs.x, obs.y, '+' + points, color(120, 80, 100));
       } else {
         onPlayerHit();
       }
@@ -811,11 +770,10 @@ function updateGame() {
     if (dist(player.x, player.y, pow.x, pow.y) < 30) {
       if (!queuedPowerup && !activePowerup) {
         queuedPowerup = pow.type;
-        spawnFloatingText(pow.x, pow.y, pow.type.toUpperCase() + "!", color(60, 90, 100));
-      }
-      else {
+        spawnFloatingText(pow.x, pow.y, pow.type.toUpperCase() + '!', color(60, 90, 100));
+      } else {
         score += 150;
-        spawnFloatingText(pow.x, pow.y, "+150", color(60, 90, 100));
+        spawnFloatingText(pow.x, pow.y, '+150', color(60, 90, 100));
       }
       powerups.splice(i, 1);
       score += 100;
@@ -840,16 +798,15 @@ function updateGame() {
     if (d < 26) {
       let points = 50 * comboMultiplier;
       score += points;
-      spawnFloatingText(gem.x, gem.y, "+" + floor(points), color(50, 90, 100));
+      spawnFloatingText(gem.x, gem.y, '+' + floor(points), color(50, 90, 100));
       comboMultiplier = min(comboMultiplier + 0.05, 5);
       comboTimer = 180;
       collectibles.splice(i, 1);
-      
+
       // ✅ CURRENCY UPDATE
       totalCredits++;
-      
-      for (let k = 0; k < 6; k++)
-        spawnParticle(player.x, player.y, color(50, 90, 100));
+
+      for (let k = 0; k < 6; k++) spawnParticle(player.x, player.y, color(50, 90, 100));
     }
   }
 
@@ -893,7 +850,7 @@ function drawGame() {
   for (let gem of collectibles) drawCollectible(gem);
 
   drawPlayer();
-  
+
   push();
   blendMode(ADD);
   for (let p of particles) p.draw();
@@ -944,31 +901,31 @@ function drawPlayer() {
   }
 
   if (movingLeft) {
-    lastDir = "left";
+    lastDir = 'left';
   } else if (movingRight) {
-    lastDir = "right";
+    lastDir = 'right';
   }
 
   let frameW = sheet.width / 4;
   let frameH = sheet.height / 2;
-  let row = activePowerup === "speed" ? 1 : 0;
-  let col = lastDir === "left" ? frameIndex : frameIndex + 2;
+  let row = activePowerup === 'speed' ? 1 : 0;
+  let col = lastDir === 'left' ? frameIndex : frameIndex + 2;
 
   let sx = col * frameW;
   let sy = row * frameH;
 
   push();
-  
+
   // Draw Trail
   if (player.trail) {
-      noStroke();
-      for (let i = 0; i < player.trail.length; i++) {
-        let t = player.trail[i];
-        let alpha = map(i, 0, player.trail.length, 0, 150);
-        let size = map(i, 0, player.trail.length, 10, 30);
-        fill(rgbHue, 80, 100, alpha);
-        ellipse(t.x, t.y, size, size);
-      }
+    noStroke();
+    for (let i = 0; i < player.trail.length; i++) {
+      let t = player.trail[i];
+      let alpha = map(i, 0, player.trail.length, 0, 150);
+      let size = map(i, 0, player.trail.length, 10, 30);
+      fill(rgbHue, 80, 100, alpha);
+      ellipse(t.x, t.y, size, size);
+    }
   }
 
   translate(player.x, player.y);
@@ -988,38 +945,38 @@ function drawPlayer() {
 }
 
 function drawVignette() {
-    let healthPct = displayedHealth / playerMaxHealth;
-    if (healthPct > 0.4 && !activePowerup) return; // Only draw if damaged or powered up
+  let healthPct = displayedHealth / playerMaxHealth;
+  if (healthPct > 0.4 && !activePowerup) return; // Only draw if damaged or powered up
 
-    push();
-    blendMode(MULTIPLY);
-    
-    let cx = LOGICAL_WIDTH / 2;
-    let cy = LOGICAL_HEIGHT / 2;
-    let maxR = max(LOGICAL_WIDTH, LOGICAL_HEIGHT) * 0.85;
-    
-    // Create gradient
-    let grad = drawingContext.createRadialGradient(cx, cy, maxR * 0.4, cx, cy, maxR);
-    
-    if (healthPct <= 0.4) {
-        // Red pulse - Faster as health drops
-        let pulseSpeed = map(healthPct, 0.4, 0, 0.2, 0.8);
-        let pulse = (sin(frameCount * pulseSpeed) + 1) * 0.5; // 0 to 1
-        let intensity = map(healthPct, 0.4, 0, 0, 0.8) + pulse * 0.2;
-        grad.addColorStop(0, "rgba(0,0,0,0)");
-        grad.addColorStop(1, `rgba(255, 0, 0, ${intensity})`);
-    } else {
-        // Just darkness (optional, but let's keep it clean)
-        grad.addColorStop(0, "rgba(0,0,0,0)");
-        grad.addColorStop(1, "rgba(0,0,0,0)");
-    }
+  push();
+  blendMode(MULTIPLY);
 
-    drawingContext.fillStyle = grad;
-    rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-    pop();
-    
-    // Reset blend mode
-    blendMode(BLEND);
+  let cx = LOGICAL_WIDTH / 2;
+  let cy = LOGICAL_HEIGHT / 2;
+  let maxR = max(LOGICAL_WIDTH, LOGICAL_HEIGHT) * 0.85;
+
+  // Create gradient
+  let grad = drawingContext.createRadialGradient(cx, cy, maxR * 0.4, cx, cy, maxR);
+
+  if (healthPct <= 0.4) {
+    // Red pulse - Faster as health drops
+    let pulseSpeed = map(healthPct, 0.4, 0, 0.2, 0.8);
+    let pulse = (sin(frameCount * pulseSpeed) + 1) * 0.5; // 0 to 1
+    let intensity = map(healthPct, 0.4, 0, 0, 0.8) + pulse * 0.2;
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, `rgba(255, 0, 0, ${intensity})`);
+  } else {
+    // Just darkness (optional, but let's keep it clean)
+    grad.addColorStop(0, 'rgba(0,0,0,0)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+  }
+
+  drawingContext.fillStyle = grad;
+  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  pop();
+
+  // Reset blend mode
+  blendMode(BLEND);
 }
 
 function drawGameUI() {
@@ -1031,7 +988,7 @@ function drawGameUI() {
   fill(0, 0, 90);
   textAlign(LEFT, TOP);
   textSize(14);
-  text("HEALTH", 20, 18);
+  text('HEALTH', 20, 18);
   noFill();
   stroke(0, 0, 60);
   strokeWeight(2);
@@ -1043,11 +1000,11 @@ function drawGameUI() {
   fill(50, 90, 100);
   textAlign(RIGHT, TOP);
   textSize(18);
-  text("SCORE: " + floor(score), LOGICAL_WIDTH - 20, 18);
+  text('SCORE: ' + floor(score), LOGICAL_WIDTH - 20, 18);
   if (comboMultiplier > 1) {
     fill(320, 90, 100);
     textSize(16);
-    text("x" + comboMultiplier.toFixed(1) + " COMBO!", LOGICAL_WIDTH - 20, 44);
+    text('x' + comboMultiplier.toFixed(1) + ' COMBO!', LOGICAL_WIDTH - 20, 44);
   }
 
   // Stats
@@ -1055,18 +1012,14 @@ function drawGameUI() {
   textAlign(CENTER, TOP);
   textSize(16);
   let timeAlive = floor((frameCount - sessionStartFrame) / 60);
-  text(
-    "TIME: " + timeAlive + "s  |  BPM: " + bpm.toFixed(1),
-    LOGICAL_WIDTH / 2,
-    18,
-  );
+  text('TIME: ' + timeAlive + 's  |  BPM: ' + bpm.toFixed(1), LOGICAL_WIDTH / 2, 18);
 
   // Powerup Bar
   if (activePowerup) {
     fill(0, 0, 90);
     textAlign(LEFT, TOP);
     textSize(14);
-    text("POWERUP: " + activePowerup.toUpperCase(), 20, 72);
+    text('POWERUP: ' + activePowerup.toUpperCase(), 20, 72);
     noFill();
     stroke(180, 80, 100);
     strokeWeight(2);
@@ -1078,7 +1031,7 @@ function drawGameUI() {
     fill(0, 0, 90);
     textAlign(LEFT, TOP);
     textSize(14);
-    text("READY: " + queuedPowerup.toUpperCase() + " (SPACE)", 20, 72);
+    text('READY: ' + queuedPowerup.toUpperCase() + ' (SPACE)', 20, 72);
   }
 
   // Dash Bar
@@ -1094,28 +1047,24 @@ function drawGameUI() {
   fill(0, 0, 80);
   textAlign(RIGHT, TOP);
   textSize(10);
-  text(
-    dashCooldown === 0 ? "Dash Ready (Shift)" : "Dash",
-    LOGICAL_WIDTH - 16,
-    58,
-  );
+  text(dashCooldown === 0 ? 'Dash Ready (Shift)' : 'Dash', LOGICAL_WIDTH - 16, 58);
 
   fill(0, 0, 75);
   textAlign(LEFT, TOP);
   textSize(12);
-  text("DIFFICULTY: " + difficulty.toUpperCase(), 20, 4);
-  
+  text('DIFFICULTY: ' + difficulty.toUpperCase(), 20, 4);
+
   // Credits
   fill(50, 90, 100);
   textAlign(RIGHT, TOP);
   textSize(14);
-  text("CREDITS: " + totalCredits, LOGICAL_WIDTH - 20, 90);
-  
+  text('CREDITS: ' + totalCredits, LOGICAL_WIDTH - 20, 90);
+
   // ─── DRAW CONTROLS ───
   if (joystick) joystick.draw();
   if (btnDash) btnDash.draw();
   if (btnPower && queuedPowerup) btnPower.draw(); // Only show power btn when needed
-  
+
   pop();
 
   let sessionTime = (frameCount - sessionStartFrame) / 60;
@@ -1124,9 +1073,9 @@ function drawGameUI() {
     fill(0, 0, 90, map(sessionTime, 8, 10, 200, 0));
     textAlign(RIGHT, BOTTOM);
     textSize(12);
-    text("WASD/ARROWS: Move", LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 40);
-    text("SPACE: Use Powerup", LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 25);
-    text("P: Pause", LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 10);
+    text('WASD/ARROWS: Move', LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 40);
+    text('SPACE: Use Powerup', LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 25);
+    text('P: Pause', LOGICAL_WIDTH - 20, LOGICAL_HEIGHT - 10);
     pop();
   }
 }
@@ -1144,11 +1093,11 @@ class Obstacle {
     this.pulseSize = this.width;
     this.jitterX = 0;
     this.jitterY = 0;
-    if (type === "laser") {
+    if (type === 'laser') {
       this.width = 10;
       this.height = LOGICAL_HEIGHT;
       this.y = LOGICAL_HEIGHT / 2;
-    } else if (type === "barrier") {
+    } else if (type === 'barrier') {
       this.width = 20;
       this.height = 200;
     }
@@ -1167,34 +1116,34 @@ class Obstacle {
     rotate(radians(this.rotation));
     rectMode(CENTER);
     noStroke();
-    if (this.type === "single") {
+    if (this.type === 'single') {
       fill(0, 90, 100);
       let s = this.pulseSize / this.baseSize;
       scale(s);
       rect(0, 0, this.width, this.height, 5);
-    } else if (this.type === "double") {
+    } else if (this.type === 'double') {
       fill(30, 90, 100);
       rect(0, -30, this.width, this.height, 5);
       rect(0, 30, this.width, this.height, 5);
-    } else if (this.type === "triple") {
+    } else if (this.type === 'triple') {
       fill(60, 90, 100);
       rect(0, -60, 35, 35, 5);
       rect(0, 0, 35, 35, 5);
       rect(0, 60, 35, 35, 5);
-    } else if (this.type === "wave") {
+    } else if (this.type === 'wave') {
       fill(180, 90, 100);
       for (let i = 0; i < 5; i++) {
         let offsetY = sin((frameCount + i * 20) * 0.1) * 40;
         ellipse(0, -80 + i * 40 + offsetY, 30, 30);
       }
-    } else if (this.type === "laser") {
+    } else if (this.type === 'laser') {
       fill(320, 90, 100);
       rect(0, 0, this.width, this.height);
       if (frameCount % 20 < 10) {
         fill(320, 90, 100, 100);
         rect(0, 0, this.width + 10, this.height);
       }
-    } else if (this.type === "barrier") {
+    } else if (this.type === 'barrier') {
       fill(280, 90, 100);
       rect(0, 0, this.width, this.height, 5);
     }
@@ -1208,16 +1157,16 @@ class Obstacle {
  */
 function spawnObstacle(type) {
   let y = cameraY - 120;
-  let x = type === "laser" ? LOGICAL_WIDTH / 2 : random(60, LOGICAL_WIDTH - 60);
+  let x = type === 'laser' ? LOGICAL_WIDTH / 2 : random(60, LOGICAL_WIDTH - 60);
   obstacles.push(new Obstacle(x, y, type));
 }
 
 function spawnPowerup() {
   // RANDOM POOL: Speed, Shockwave, or Shield
   let r = random();
-  let type = "speed";
-  if (r < 0.33) type = "shockwave";
-  else if (r < 0.66) type = "shield";
+  let type = 'speed';
+  if (r < 0.33) type = 'shockwave';
+  else if (r < 0.66) type = 'shield';
 
   powerups.push({
     x: random(60, LOGICAL_WIDTH - 60),
@@ -1240,12 +1189,12 @@ function drawPowerup(pow) {
   translate(pow.x, pow.y);
   let pulseSize = 36 + sin(frameCount * 0.1) * 4;
 
-  if (pow.type === "shield" && powerupShield) {
+  if (pow.type === 'shield' && powerupShield) {
     imageMode(CENTER);
     tint(180, 255, 255, 200);
     image(powerupShield, 0, 0, pulseSize, pulseSize);
     noTint();
-  } else if (pow.type === "shield") {
+  } else if (pow.type === 'shield') {
     // Fallback if image missing
     noStroke();
     fill(180, 80, 100); // Cyan
@@ -1253,7 +1202,7 @@ function drawPowerup(pow) {
     stroke(180, 80, 100);
     noFill();
     ellipse(0, 0, pulseSize, pulseSize);
-  } else if (pow.type === "speed" && powerupSpeed) {
+  } else if (pow.type === 'speed' && powerupSpeed) {
     imageMode(CENTER);
     tint(255, 255, 100, 150);
     image(powerupSpeed, 0, 0, pulseSize, pulseSize);
@@ -1264,10 +1213,10 @@ function drawPowerup(pow) {
     rectMode(CENTER);
     noStroke();
 
-    if (pow.type === "speed") {
+    if (pow.type === 'speed') {
       fill(60, 90, 100);
       triangle(-12, 12, 12, 12, 0, -12);
-    } else if (pow.type === "shockwave") {
+    } else if (pow.type === 'shockwave') {
       // SHOCKWAVE ICON
       noStroke();
       fill(180, 0, 100);
@@ -1298,7 +1247,7 @@ function activatePowerup(type) {
   // FIX: Clear queuedPowerup immediately to prevent infinite reuse
   queuedPowerup = null;
 
-  if (type === "shockwave") {
+  if (type === 'shockwave') {
     shockwaveActive = true;
     shockwaveRadius = 1;
     obstacles = [];
@@ -1311,9 +1260,9 @@ function activatePowerup(type) {
 
   activePowerup = type;
   powerupDuration = 300;
-  if (type === "speed") {
+  if (type === 'speed') {
     if (sfxJetPower && sfxJetPower.isLoaded()) sfxJetPower.play();
-  } else if (type === "shield") {
+  } else if (type === 'shield') {
     if (sfxPowerUp && sfxPowerUp.isLoaded()) sfxPowerUp.play();
   }
   flashAlpha = 120;
@@ -1327,19 +1276,19 @@ function activatePowerup(type) {
  * Handles rhythm-based spawning and visual effects.
  */
 function onBeat() {
-  if (gameState !== "playing") return;
+  if (gameState !== 'playing') return;
   flashAlpha = max(flashAlpha, 15);
   screenShake = max(screenShake, 5 + (bpm - 90) / 10);
 
-  let availableObstacles = ["single", "double", "gap"];
+  let availableObstacles = ['single', 'double', 'gap'];
 
   // ✅ UNLOCK BASED ON LOOP COUNT (NOT BPM)
-  if (loopCount >= 1) availableObstacles.push("wave");
-  if (loopCount >= 2) availableObstacles.push("laser", "barrier");
-  if (loopCount >= 3) availableObstacles.push("triple");
+  if (loopCount >= 1) availableObstacles.push('wave');
+  if (loopCount >= 2) availableObstacles.push('laser', 'barrier');
+  if (loopCount >= 3) availableObstacles.push('triple');
 
   let type = random(availableObstacles);
-  if (type !== "gap") spawnObstacle(type);
+  if (type !== 'gap') spawnObstacle(type);
 
   // Spawn Rates (Powerups appear 20% of the time on beat)
   if (random() < 0.2) spawnPowerup();
@@ -1363,8 +1312,7 @@ function onBeat() {
  */
 function checkCollision(p, obs) {
   return (
-    abs(p.x - obs.x) < (p.width + obs.width) / 2 &&
-    abs(p.y - obs.y) < (p.height + obs.height) / 2
+    abs(p.x - obs.x) < (p.width + obs.width) / 2 && abs(p.y - obs.y) < (p.height + obs.height) / 2
   );
 }
 
@@ -1408,12 +1356,12 @@ function onPlayerHit() {
     }
 
     // Add to Leaderboard
-    leaderboard.addScore("Player " + floor(random(1000)), floor(score));
+    leaderboard.addScore('Player ' + floor(random(1000)), floor(score));
 
     saveData(); // ✅ SAVE EVERYTHING
 
     // ✅ LOCK GAME STATE
-    gameState = "gameOver";
+    gameState = 'gameOver';
     // ✅ FORCE RESET DIFFICULTY ENGINE
     musicSpeed = 1.0;
     bpm = 90;
@@ -1457,12 +1405,12 @@ function spawnFloatingText(x, y, txt, col) {
     life: 60,
     maxLife: 60,
     vy: -2,
-    update: function() {
+    update: function () {
       this.y += this.vy;
       this.vy *= 0.95; // Slow down
       this.life--;
     },
-    draw: function() {
+    draw: function () {
       push();
       textAlign(CENTER, CENTER);
       textSize(20);
@@ -1474,7 +1422,7 @@ function spawnFloatingText(x, y, txt, col) {
       fill(hue(this.col), saturation(this.col), brightness(this.col), alpha);
       text(this.txt, this.x, this.y);
       pop();
-    }
+    },
   });
 }
 
@@ -1519,9 +1467,9 @@ function spawnExplosionParticle(x, y) {
 // ─── BACKGROUND ───
 function drawParallaxBG() {
   let bgFlash = 0;
-  if (gameState === "playing" && beatInterval > 0) {
-      let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
-      if (beatProgress < 0.2) bgFlash = (1 - beatProgress / 0.2) * 20;
+  if (gameState === 'playing' && beatInterval > 0) {
+    let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
+    if (beatProgress < 0.2) bgFlash = (1 - beatProgress / 0.2) * 20;
   }
 
   for (let layer of parallaxLayers) {
@@ -1547,22 +1495,21 @@ function initParallax() {
 
 function drawAnimatedGrid() {
   push();
-  
+
   let pulse = 0;
-  if (gameState === "playing" && beatInterval > 0) {
-      let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
-      pulse = max(0, 1 - beatProgress); // Decay from 1 to 0
+  if (gameState === 'playing' && beatInterval > 0) {
+    let beatProgress = (frameCount - lastBeatFrame) / beatInterval;
+    pulse = max(0, 1 - beatProgress); // Decay from 1 to 0
   }
-  
+
   stroke(rgbHue, 40, 60, 40 + pulse * 60);
   strokeWeight(1 + pulse * 1.5);
-  
+
   let gridSize = 60;
   let offset = (frameCount * 2 + cameraY * 0.3) % gridSize;
   for (let y = -gridSize; y < LOGICAL_HEIGHT + gridSize; y += gridSize)
     line(0, y - offset, LOGICAL_WIDTH, y - offset);
-  for (let x = 0; x < LOGICAL_WIDTH; x += gridSize)
-    line(x, 0, x, LOGICAL_HEIGHT);
+  for (let x = 0; x < LOGICAL_WIDTH; x += gridSize) line(x, 0, x, LOGICAL_HEIGHT);
   pop();
 }
 
@@ -1574,7 +1521,7 @@ function resetPlayer() {
     vy: 0,
     width: 26,
     height: 34,
-    trail: []
+    trail: [],
   };
   playerHealth = playerMaxHealth;
   playerInvincible = 60;
@@ -1603,7 +1550,7 @@ function drawGameOver() {
   // ─── HIGH SCORE (TOP) ───
   fill(60, 90, 100);
   textSize(22);
-  text("HIGH SCORE: " + highScore, cx, cy - 140);
+  text('HIGH SCORE: ' + highScore, cx, cy - 140);
 
   // ─── MAIN GAME OVER TITLE ───
   push();
@@ -1612,28 +1559,28 @@ function drawGameOver() {
   fill(0, 90, 100);
   textSize(64);
   textStyle(BOLD);
-  text("TRIAL FAILED", 0, 0);
+  text('TRIAL FAILED', 0, 0);
   pop();
 
   // ─── CURRENT SCORE ───
   fill(0, 0, 90);
   textSize(24);
-  text("SCORE: " + floor(score), cx, cy + 30);
-  
+  text('SCORE: ' + floor(score), cx, cy + 30);
+
   // ─── TOTAL CREDITS ───
   fill(50, 90, 100);
   textSize(20);
-  text("TOTAL CREDITS: " + totalCredits, cx, cy + 70);
+  text('TOTAL CREDITS: ' + totalCredits, cx, cy + 70);
 
   // ─── CONTROLS ───
   fill(0, 0, 60);
   textSize(16);
-  text("Press R to Retry | Press M for Menu", cx, cy + 120);
+  text('Press R to Retry | Press M for Menu', cx, cy + 120);
 
   // ─── CREDITS ───
   fill(0, 0, 90);
   textSize(12);
-  text("Final project by Saturn, Yoshi, Frankie", cx, LOGICAL_HEIGHT - 40);
+  text('Final project by Saturn, Yoshi, Frankie', cx, LOGICAL_HEIGHT - 40);
 }
 
 function drawVictory() {
@@ -1647,15 +1594,15 @@ function drawVictory() {
   textAlign(CENTER, CENTER);
   textSize(64);
   textStyle(BOLD);
-  text("COMPLETE!", 0, 0);
+  text('COMPLETE!', 0, 0);
   pop();
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
   textSize(28);
-  text("Final Score: " + floor(score), LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
+  text('Final Score: ' + floor(score), LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
   fill(0, 0, 60);
   textSize(14);
-  text("Press M for menu", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100);
+  text('Press M for menu', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100);
 }
 
 function drawCredits() {
@@ -1668,19 +1615,19 @@ function drawCredits() {
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
   textSize(48);
-  text("TRIALS OF TEMPO", LOGICAL_WIDTH / 2, 100);
+  text('TRIALS OF TEMPO', LOGICAL_WIDTH / 2, 100);
   textSize(24);
-  text("Endless Mode", LOGICAL_WIDTH / 2, 180);
+  text('Endless Mode', LOGICAL_WIDTH / 2, 180);
   textSize(18);
   fill(0, 0, 80);
-  text("━━━ CREDITS ━━━", LOGICAL_WIDTH / 2, 280);
-  text("Saturn - Project Lead", LOGICAL_WIDTH / 2, 320);
-  text("Yoshi - Developer", LOGICAL_WIDTH / 2, 350);
-  text("Frankie - Artist", LOGICAL_WIDTH / 2, 380);
-  text("Music by Cacola", LOGICAL_WIDTH / 2, 540);
+  text('━━━ CREDITS ━━━', LOGICAL_WIDTH / 2, 280);
+  text('Saturn - Project Lead', LOGICAL_WIDTH / 2, 320);
+  text('Yoshi - Developer', LOGICAL_WIDTH / 2, 350);
+  text('Frankie - Artist', LOGICAL_WIDTH / 2, 380);
+  text('Music by Cacola', LOGICAL_WIDTH / 2, 540);
   textSize(16);
   fill(0, 0, 60);
-  text("Press M to return to menu", LOGICAL_WIDTH / 2, 1120);
+  text('Press M to return to menu', LOGICAL_WIDTH / 2, 1120);
   pop();
 }
 let creditStartFrame = 0;
@@ -1696,86 +1643,86 @@ window.keyPressed = keyPressed;
 // Touch Variables
 // (Handled by VirtualJoystick/TouchButton classes now)
 
-window.touchStarted = function() {
+window.touchStarted = function () {
   if (getAudioContext().state !== 'running') {
     getAudioContext().resume();
   }
 
   // Prevent default behavior to stop scrolling
-  // return false; 
-  
+  // return false;
+
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
 
   // If in menu, treat as mouse press
-  if (gameState !== "playing") {
+  if (gameState !== 'playing') {
     mousePressed();
     return false;
   }
-  
+
   // Game Logic
   // Iterate touches
   for (let i = 0; i < touches.length; i++) {
-      let t = touches[i];
-      let tx = (t.x - offsetX) / gameScale;
-      let ty = (t.y - offsetY) / gameScale;
-      
-      if (joystick && !joystick.active) {
-          if (joystick.start(t.id, tx, ty)) continue;
-      }
-      if (btnDash && !btnDash.active) {
-          if (btnDash.start(t.id, tx, ty)) continue;
-      }
-      if (btnPower && !btnPower.active && queuedPowerup) {
-          if (btnPower.start(t.id, tx, ty)) continue;
-      }
+    let t = touches[i];
+    let tx = (t.x - offsetX) / gameScale;
+    let ty = (t.y - offsetY) / gameScale;
+
+    if (joystick && !joystick.active) {
+      if (joystick.start(t.id, tx, ty)) continue;
+    }
+    if (btnDash && !btnDash.active) {
+      if (btnDash.start(t.id, tx, ty)) continue;
+    }
+    if (btnPower && !btnPower.active && queuedPowerup) {
+      if (btnPower.start(t.id, tx, ty)) continue;
+    }
   }
 
   return false;
-}
+};
 
-window.touchMoved = function() {
-  if (gameState !== "playing") return false;
+window.touchMoved = function () {
+  if (gameState !== 'playing') return false;
 
   for (let i = 0; i < touches.length; i++) {
-      let t = touches[i];
-      let tx = (t.x - offsetX) / gameScale;
-      let ty = (t.y - offsetY) / gameScale;
-      
-      if (joystick && joystick.id === t.id) {
-          joystick.move(tx, ty);
-      }
+    let t = touches[i];
+    let tx = (t.x - offsetX) / gameScale;
+    let ty = (t.y - offsetY) / gameScale;
+
+    if (joystick && joystick.id === t.id) {
+      joystick.move(tx, ty);
+    }
   }
   return false;
-}
+};
 
-window.touchEnded = function() {
-  if (gameState !== "playing") return false;
-  
+window.touchEnded = function () {
+  if (gameState !== 'playing') return false;
+
   // Find which touch ended is tricky in p5 global without touch ID events in touchEnded
   // We scan existing touches and see which ID is missing from our active objects
-  
-  let currentIds = touches.map(t => t.id);
-  
+
+  let currentIds = touches.map((t) => t.id);
+
   if (joystick && joystick.active && !currentIds.includes(joystick.id)) {
-      joystick.end(joystick.id);
+    joystick.end(joystick.id);
   }
   if (btnDash && btnDash.active && !currentIds.includes(btnDash.id)) {
-      btnDash.end(btnDash.id);
+    btnDash.end(btnDash.id);
   }
   if (btnPower && btnPower.active && !currentIds.includes(btnPower.id)) {
-      btnPower.end(btnPower.id);
+    btnPower.end(btnPower.id);
   }
 
   return false;
-}
+};
 
 function mousePressed() {
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
 
-  if (gameState === "waitingForInput") {
-    gameState = "intro";
+  if (gameState === 'waitingForInput') {
+    gameState = 'intro';
     if (introVideo) {
       introVideo.time(0);
       introVideo.play();
@@ -1783,31 +1730,28 @@ function mousePressed() {
     return;
   }
 
-  if (gameState === "intro") {
+  if (gameState === 'intro') {
     skipIntro();
     return;
   }
-  if (gameState === "title") {
-    if (mx > LOGICAL_WIDTH / 2 - 150 && mx < LOGICAL_WIDTH / 2 + 150) { // Width 300
+  if (gameState === 'title') {
+    if (mx > LOGICAL_WIDTH / 2 - 150 && mx < LOGICAL_WIDTH / 2 + 150) {
+      // Width 300
       if (sfxButton) sfxButton.play();
-      
+
       // START Button (Center H/2 + 40, Height 50) -> Range approx 15 to 65
-      if (my > LOGICAL_HEIGHT / 2 + 15 && my < LOGICAL_HEIGHT / 2 + 65)
-        startGame();
-      
+      if (my > LOGICAL_HEIGHT / 2 + 15 && my < LOGICAL_HEIGHT / 2 + 65) startGame();
       // CUSTOMIZE Button (Center H/2 + 100, Height 50) -> Range approx 75 to 125
       else if (my > LOGICAL_HEIGHT / 2 + 75 && my < LOGICAL_HEIGHT / 2 + 125)
-        gameState = "customize";
-      
+        gameState = 'customize';
       // INSTRUCTIONS Button (Center H/2 + 160, Height 50) -> Range approx 135 to 185
       else if (my > LOGICAL_HEIGHT / 2 + 135 && my < LOGICAL_HEIGHT / 2 + 185)
-        gameState = "instructions";
-      
+        gameState = 'instructions';
       // LEADERBOARD Button (Center H/2 + 220, Height 50) -> Range approx 195 to 245
       else if (my > LOGICAL_HEIGHT / 2 + 195 && my < LOGICAL_HEIGHT / 2 + 245)
-        gameState = "leaderboard";
+        gameState = 'leaderboard';
     }
-  } else if (gameState === "customize") {
+  } else if (gameState === 'customize') {
     let startX = LOGICAL_WIDTH / 2 - 180;
     for (let i = 0; i < 4; i++) {
       let x = startX + i * 120;
@@ -1823,26 +1767,26 @@ function mousePressed() {
       my < LOGICAL_HEIGHT - 62
     ) {
       if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
-      gameState = "title";
+      gameState = 'title';
     }
-  } else if (gameState === "instructions") {
+  } else if (gameState === 'instructions') {
     if (
       mx > LOGICAL_WIDTH - 180 &&
       mx < LOGICAL_WIDTH - 20 &&
       my > LOGICAL_HEIGHT - 68 &&
       my < LOGICAL_HEIGHT - 32
     ) {
-      gameState = "title";
+      gameState = 'title';
       if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
     }
-  } else if (gameState === "leaderboard") {
+  } else if (gameState === 'leaderboard') {
     if (
       mx > LOGICAL_WIDTH / 2 - 80 &&
       mx < LOGICAL_WIDTH / 2 + 80 &&
       my > LOGICAL_HEIGHT - 98 &&
       my < LOGICAL_HEIGHT - 62
     ) {
-      gameState = "title";
+      gameState = 'title';
       if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
     }
   }
@@ -1898,16 +1842,16 @@ function hardRestartGame() {
 
 function keyPressed() {
   // ─── INTRO ───
-  if (gameState === "intro") {
+  if (gameState === 'intro') {
     skipIntro();
     return;
   }
 
   // ─── GAME OVER ───
-  if (gameState === "gameOver") {
-    if (key.toLowerCase() === "r") {
+  if (gameState === 'gameOver') {
+    if (key.toLowerCase() === 'r') {
       hardRestartGame();
-    } else if (key.toLowerCase() === "m") {
+    } else if (key.toLowerCase() === 'm') {
       clearTimeout(loopTimer);
       loopTimer = null;
 
@@ -1915,18 +1859,18 @@ function keyPressed() {
       if (gameLoopSong) gameLoopSong.stop();
       musicSessionID++;
 
-      gameState = "title";
+      gameState = 'title';
     }
   }
 
   // ─── VICTORY ───
-  else if (gameState === "victory") {
-    if (key.toLowerCase() === "r") {
+  else if (gameState === 'victory') {
+    if (key.toLowerCase() === 'r') {
       hardRestartGame();
-    } else if (key.toLowerCase() === "c") {
-      gameState = "credits";
+    } else if (key.toLowerCase() === 'c') {
+      gameState = 'credits';
       creditStartFrame = frameCount;
-    } else if (key.toLowerCase() === "m") {
+    } else if (key.toLowerCase() === 'm') {
       clearTimeout(loopTimer);
       loopTimer = null;
 
@@ -1934,23 +1878,23 @@ function keyPressed() {
       if (gameLoopSong) gameLoopSong.stop();
       musicSessionID++;
 
-      gameState = "title";
+      gameState = 'title';
     }
   }
 
   // ─── CREDITS ───
-  else if (gameState === "credits") {
-    if (key.toLowerCase() === "m") {
-      gameState = "title";
+  else if (gameState === 'credits') {
+    if (key.toLowerCase() === 'm') {
+      gameState = 'title';
       musicSessionID++;
     }
   }
 
   // ─── PLAYING ───
-  else if (gameState === "playing") {
+  else if (gameState === 'playing') {
     // Pause
-    if (key.toLowerCase() === "p") {
-      gameState = "paused";
+    if (key.toLowerCase() === 'p') {
+      gameState = 'paused';
     }
 
     // Use Powerup
@@ -1966,12 +1910,12 @@ function keyPressed() {
     }
 
     // Restart
-    else if (key.toLowerCase() === "r") {
+    else if (key.toLowerCase() === 'r') {
       hardRestartGame();
     }
 
     // Menu
-    else if (key.toLowerCase() === "m") {
+    else if (key.toLowerCase() === 'm') {
       clearTimeout(loopTimer);
       loopTimer = null;
 
@@ -1979,19 +1923,19 @@ function keyPressed() {
       if (gameLoopSong) gameLoopSong.stop();
       musicSessionID++;
 
-      gameState = "title";
+      gameState = 'title';
     }
   }
 
   // ─── PAUSED ───
-  else if (gameState === "paused") {
+  else if (gameState === 'paused') {
     // Resume
-    if (key.toLowerCase() === "p") {
-      gameState = "playing";
+    if (key.toLowerCase() === 'p') {
+      gameState = 'playing';
     }
 
     // Menu
-    else if (key.toLowerCase() === "m") {
+    else if (key.toLowerCase() === 'm') {
       clearTimeout(loopTimer);
       loopTimer = null;
 
@@ -1999,11 +1943,11 @@ function keyPressed() {
       if (gameLoopSong) gameLoopSong.stop();
       musicSessionID++;
 
-      gameState = "title";
+      gameState = 'title';
     }
 
     // Restart
-    else if (key.toLowerCase() === "r") {
+    else if (key.toLowerCase() === 'r') {
       hardRestartGame();
     }
   }
@@ -2011,76 +1955,78 @@ function keyPressed() {
 
 // Extracted Dash Logic for re-use
 function performDash() {
-    if (dashCooldown === 0) {
-        dashDuration = dashDurationMax;
-        dashCooldown = difficulties[difficulty].dashCooldownMax;
+  if (dashCooldown === 0) {
+    dashDuration = dashDurationMax;
+    dashCooldown = difficulties[difficulty].dashCooldownMax;
 
-        let ix = 0,
-          iy = 0;
-          
-        // Combine Keyboard + Joystick Input
-        if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
-        if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
-        if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
-        if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
-        
-        if (joystick && joystick.active) {
-            ix += joystick.inputX;
-            iy += joystick.inputY;
-        }
+    let ix = 0,
+      iy = 0;
 
-        if (ix !== 0 || iy !== 0) {
-          // Normalize if length > 1 (so diagonal isn't faster, 
-          // though inputX/Y from joystick is already normalized to 1 max)
-          let mag = sqrt(ix * ix + iy * iy);
-          if (mag > 0) {
-             ix /= mag;
-             iy /= mag;
-          }
+    // Combine Keyboard + Joystick Input
+    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
+    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
+    if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
+    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
 
-          player.vx += ix * dashPower;
-          player.vy += iy * dashPower;
+    if (joystick && joystick.active) {
+      ix += joystick.inputX;
+      iy += joystick.inputY;
+    }
 
-          // ✨ AAA POLISH: Dash Particle Burst
-          for(let i=0; i<15; i++) {
-             // Spawn particles in opposite direction
-             let px = player.x + random(-10, 10);
-             let py = player.y + random(-10, 10);
-             // Mix Pink and Cyan for vibrant cyber effect
-             let pColor = random() > 0.5 ? color(300, 60, 100) : color(180, 80, 100);
-             
-             // Create a custom particle for dash
-             particles.push({
-                x: px, y: py,
-                vx: -ix * random(2, 6) + random(-1, 1),
-                vy: -iy * random(2, 6) + random(-1, 1),
-                life: 40, maxLife: 40,
-                color: pColor,
-                update: function() {
-                    this.x += this.vx; 
-                    this.y += this.vy;
-                    this.vx *= 0.9;
-                    this.vy *= 0.9;
-                    this.life--;
-                },
-                draw: function() {
-                    push();
-                    noStroke();
-                    let alpha = map(this.life, 0, this.maxLife, 0, 255);
-                    fill(hue(this.color), saturation(this.color), brightness(this.color), alpha);
-                    // Stretch particle in direction of movement
-                    translate(this.x, this.y);
-                    rotate(atan2(this.vy, this.vx));
-                    ellipse(0, 0, 12 + this.life/2, 4); 
-                    pop();
-                }
-             });
-          }
-        }
-
-        flashAlpha = 120;
-        screenShake = max(screenShake, 12); // Increased shake
+    if (ix !== 0 || iy !== 0) {
+      // Normalize if length > 1 (so diagonal isn't faster,
+      // though inputX/Y from joystick is already normalized to 1 max)
+      let mag = sqrt(ix * ix + iy * iy);
+      if (mag > 0) {
+        ix /= mag;
+        iy /= mag;
       }
+
+      player.vx += ix * dashPower;
+      player.vy += iy * dashPower;
+
+      // ✨ AAA POLISH: Dash Particle Burst
+      for (let i = 0; i < 15; i++) {
+        // Spawn particles in opposite direction
+        let px = player.x + random(-10, 10);
+        let py = player.y + random(-10, 10);
+        // Mix Pink and Cyan for vibrant cyber effect
+        let pColor = random() > 0.5 ? color(300, 60, 100) : color(180, 80, 100);
+
+        // Create a custom particle for dash
+        particles.push({
+          x: px,
+          y: py,
+          vx: -ix * random(2, 6) + random(-1, 1),
+          vy: -iy * random(2, 6) + random(-1, 1),
+          life: 40,
+          maxLife: 40,
+          color: pColor,
+          update: function () {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.vx *= 0.9;
+            this.vy *= 0.9;
+            this.life--;
+          },
+          draw: function () {
+            push();
+            noStroke();
+            let alpha = map(this.life, 0, this.maxLife, 0, 255);
+            fill(hue(this.color), saturation(this.color), brightness(this.color), alpha);
+            // Stretch particle in direction of movement
+            translate(this.x, this.y);
+            rotate(atan2(this.vy, this.vx));
+            ellipse(0, 0, 12 + this.life / 2, 4);
+            pop();
+          },
+        });
+      }
+    }
+
+    flashAlpha = 120;
+    screenShake = max(screenShake, 12); // Increased shake
+  }
 }
 
 function startGame() {
@@ -2100,7 +2046,7 @@ function startGame() {
   lastBeatFrame = frameCount;
 
   // ─── GAME STATE RESET ───
-  gameState = "playing";
+  gameState = 'playing';
   goalY = cameraY - 999999;
 
   score = 0;
@@ -2142,7 +2088,7 @@ function startGame() {
 
   if (gameIntroSong) {
     gameIntroSong.onended(() => {
-      if (gameState !== "playing") return;
+      if (gameState !== 'playing') return;
       if (mySession !== musicSessionID) return; // ✅ kills ghost loops
       setupMusicLoopSpeeding(mySession);
     });
@@ -2162,21 +2108,17 @@ function drawPausedOverlay() {
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
   textSize(36);
-  text("PAUSED", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 20);
+  text('PAUSED', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 - 20);
   textSize(16);
   fill(0, 0, 80);
-  text(
-    "Press P to resume | R to restart | M for menu",
-    LOGICAL_WIDTH / 2,
-    LOGICAL_HEIGHT / 2 + 20,
-  );
+  text('Press P to resume | R to restart | M for menu', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 20);
   pop();
 }
 
 function loadData() {
-  let savedScore = localStorage.getItem("tot_highscore");
-  let savedTime = localStorage.getItem("tot_besttime");
-  let savedCredits = localStorage.getItem("tot_credits");
+  let savedScore = localStorage.getItem('tot_highscore');
+  let savedTime = localStorage.getItem('tot_besttime');
+  let savedCredits = localStorage.getItem('tot_credits');
 
   if (savedScore !== null) highScore = parseInt(savedScore);
   if (savedTime !== null) bestTime = parseInt(savedTime);
@@ -2184,9 +2126,9 @@ function loadData() {
 }
 
 function saveData() {
-  localStorage.setItem("tot_highscore", highScore);
-  localStorage.setItem("tot_besttime", bestTime);
-  localStorage.setItem("tot_credits", totalCredits);
+  localStorage.setItem('tot_highscore', highScore);
+  localStorage.setItem('tot_besttime', bestTime);
+  localStorage.setItem('tot_credits', totalCredits);
 }
 
 function drawWaitingScreen() {
@@ -2194,10 +2136,10 @@ function drawWaitingScreen() {
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
   textSize(24);
-  text("CLICK TO START", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
+  text('CLICK TO START', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2);
   textSize(14);
   fill(0, 0, 70);
-  text("Initialize Audio & Video", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 30);
+  text('Initialize Audio & Video', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 30);
 }
 
 function drawIntro() {
@@ -2210,7 +2152,7 @@ function drawIntro() {
   fill(0, 0, 100);
   textAlign(CENTER, CENTER);
   textSize(16);
-  text("Press any key to skip", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 28);
+  text('Press any key to skip', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 28);
 
   if (introVideo.time() >= introVideo.duration() - 0.1) {
     skipIntro();
@@ -2224,7 +2166,7 @@ function skipIntro() {
   if (gameIntroSong?.isPlaying()) gameIntroSong.stop();
   if (gameLoopSong?.isPlaying()) gameLoopSong.stop();
 
-  gameState = "title";
+  gameState = 'title';
 }
 
 function setupMusicLoopSpeeding(sessionID) {
@@ -2236,7 +2178,7 @@ function setupMusicLoopSpeeding(sessionID) {
     }
 
     // ✅ KILL IF THIS IS AN OLD RUN
-    if (sessionID !== musicSessionID || gameState !== "playing") {
+    if (sessionID !== musicSessionID || gameState !== 'playing') {
       clearTimeout(loopTimer);
       loopTimer = null;
       return;
@@ -2244,7 +2186,7 @@ function setupMusicLoopSpeeding(sessionID) {
 
     loopCount++;
 
-    console.log("Loop:", loopCount, "MusicSpeed:", musicSpeed);
+    console.log('Loop:', loopCount, 'MusicSpeed:', musicSpeed);
 
     gameLoopSong.stop();
     gameLoopSong.disconnect(); // ✅ clears audio nodes
@@ -2273,23 +2215,27 @@ function drawScanlines() {
   for (let y = 0; y < LOGICAL_HEIGHT; y += 4) {
     rect(0, y, LOGICAL_WIDTH, 2);
   }
-  
+
   // Vignette
   let ctx = drawingContext;
   let gradient = ctx.createRadialGradient(
-    LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.4,
-    LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_HEIGHT * 0.8
+    LOGICAL_WIDTH / 2,
+    LOGICAL_HEIGHT / 2,
+    LOGICAL_HEIGHT * 0.4,
+    LOGICAL_WIDTH / 2,
+    LOGICAL_HEIGHT / 2,
+    LOGICAL_HEIGHT * 0.8
   );
-  gradient.addColorStop(0, "rgba(0,0,0,0)");
-  gradient.addColorStop(1, "rgba(0,0,0,0.5)");
-  
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
+
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-  
+
   // RGB Split (Chromatic Aberration) at edges
   if (gameState === 'playing' && frameCount % 4 === 0) {
-      // Very subtle random twitch
-      translate(random(-1, 1), 0);
+    // Very subtle random twitch
+    translate(random(-1, 1), 0);
   }
   pop();
 }
@@ -2310,7 +2256,8 @@ class VirtualJoystick {
 
   start(id, x, y) {
     // Check distance to base
-    if (dist(x, y, this.baseX, this.baseY) < this.r * 2.0) { // Generous hit area
+    if (dist(x, y, this.baseX, this.baseY) < this.r * 2.0) {
+      // Generous hit area
       this.id = id;
       this.active = true;
       this.move(x, y);
@@ -2323,17 +2270,17 @@ class VirtualJoystick {
     if (!this.active) return;
     let dx = x - this.baseX;
     let dy = y - this.baseY;
-    let d = sqrt(dx*dx + dy*dy);
-    
+    let d = sqrt(dx * dx + dy * dy);
+
     // Clamp stick to radius
     if (d > this.r) {
       dx = (dx / d) * this.r;
       dy = (dy / d) * this.r;
     }
-    
+
     this.x = this.baseX + dx;
     this.y = this.baseY + dy;
-    
+
     // Normalize output -1 to 1
     this.inputX = dx / this.r;
     this.inputY = dy / this.r;
@@ -2353,17 +2300,17 @@ class VirtualJoystick {
   draw() {
     push();
     resetMatrix(); // Draw in screen coordinates
-    
+
     // Base
     noFill();
     stroke(255, 50);
     strokeWeight(4);
-    ellipse(this.baseX, this.baseY, this.r * 2); 
-    
+    ellipse(this.baseX, this.baseY, this.r * 2);
+
     // Stick
     fill(255, 100);
     noStroke();
-    ellipse(this.x, this.y, 50); 
+    ellipse(this.x, this.y, 50);
     pop();
   }
 }
@@ -2382,7 +2329,8 @@ class TouchButton {
   }
 
   start(id, x, y) {
-    if (dist(x, y, this.x, this.y) < this.r * 1.5) { // Generous hit area
+    if (dist(x, y, this.x, this.y) < this.r * 1.5) {
+      // Generous hit area
       this.id = id;
       this.active = true;
       if (this.callback) this.callback();
@@ -2397,35 +2345,35 @@ class TouchButton {
       this.id = -1;
     }
   }
-  
+
   update(cd) {
-      this.cooldown = cd || 0;
+    this.cooldown = cd || 0;
   }
 
   draw() {
     push();
     resetMatrix();
-    
+
     // Visual logic
     let displayColor = this.color;
     if (this.cooldown > 0) {
-        // Desaturate if on cooldown
-        displayColor = color(hue(this.color), 20, 40);
+      // Desaturate if on cooldown
+      displayColor = color(hue(this.color), 20, 40);
     } else if (this.active) {
-        // Brighten if pressed
-        displayColor = color(hue(this.color), saturation(this.color), 100);
+      // Brighten if pressed
+      displayColor = color(hue(this.color), saturation(this.color), 100);
     }
-    
+
     fill(displayColor);
     noStroke();
     ellipse(this.x, this.y, this.r * 2);
-    
+
     // Cooldown pie chart overlay
     if (this.cooldown > 0) {
-        fill(0, 100);
-        arc(this.x, this.y, this.r*2, this.r*2, -HALF_PI, -HALF_PI + (this.cooldown * TWO_PI));
+      fill(0, 100);
+      arc(this.x, this.y, this.r * 2, this.r * 2, -HALF_PI, -HALF_PI + this.cooldown * TWO_PI);
     }
-    
+
     fill(0, 0, 100);
     textAlign(CENTER, CENTER);
     textSize(20);

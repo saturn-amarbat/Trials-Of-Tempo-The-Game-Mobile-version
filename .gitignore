@@ -3,3 +3,8 @@
 Thumbs.db
 *.log
 *.tmp
+
+# Node
+node_modules
+dist
+.env

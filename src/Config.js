@@ -8,7 +8,7 @@ export const GAME_CONSTANTS = {
   DRAG: 0.9,
   DASH_POWER: 8,
   DASH_COOLDOWN_MAX: 90,
-  DASH_DURATION_MAX: 12
+  DASH_DURATION_MAX: 12,
 };
 
 export const DIFFICULTIES = {
@@ -19,11 +19,11 @@ export const DIFFICULTIES = {
 
 export const ASSETS = {
   AUDIO: {
-    GAME_OVER: "/assets/audio/GameOver.mp3",
+    GAME_OVER: '/assets/audio/GameOver.mp3',
     // Add others if needed
   },
   VISUALS: {
-    INTRO: "/assets/visuals/Opening.mp4",
+    INTRO: '/assets/visuals/Opening.mp4',
     // Add others if needed
-  }
+  },
 };
