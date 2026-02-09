@@ -147,6 +147,7 @@ let leaderboard;
 // ─── MOBILE CONTROLS ───
 // VirtualJoystick instance for left-hand movement
 let joystick;
+let touchStarts = {}; // For swipe detection
 // TouchButton instances for right-hand actions
 let btnDash;
 let btnPower;
@@ -223,7 +224,7 @@ function setup() {
   resetPlayer();
 
   // Initialize Mobile Controls
-  joystick = new VirtualJoystick(120, LOGICAL_HEIGHT - 120, 70);
+  joystick = new VirtualJoystick(120, LOGICAL_HEIGHT - 120, 70, true);
 
   btnDash = new TouchButton(
     'DASH',
@@ -1248,6 +1249,7 @@ function activatePowerup(type) {
   queuedPowerup = null;
 
   if (type === 'shockwave') {
+    triggerHaptic(100);
     shockwaveActive = true;
     shockwaveRadius = 1;
     obstacles = [];
@@ -1318,6 +1320,7 @@ function checkCollision(p, obs) {
 
 function onPlayerHit() {
   if (sfxDamage && sfxDamage.isLoaded()) sfxDamage.play();
+  triggerHaptic(200); // Heavy impact vibration
 
   playerHealth -= difficulties[difficulty].damage;
   playerInvincible = 60;
@@ -1648,9 +1651,6 @@ window.touchStarted = function () {
     getAudioContext().resume();
   }
 
-  // Prevent default behavior to stop scrolling
-  // return false;
-
   let mx = getLogicalMouseX();
   let my = getLogicalMouseY();
 
@@ -1661,20 +1661,33 @@ window.touchStarted = function () {
   }
 
   // Game Logic
-  // Iterate touches
   for (let i = 0; i < touches.length; i++) {
     let t = touches[i];
+    
+    // Check if we are already tracking this touch
+    if (touchStarts[t.id]) continue;
+
     let tx = (t.x - offsetX) / gameScale;
     let ty = (t.y - offsetY) / gameScale;
 
-    if (joystick && !joystick.active) {
-      if (joystick.start(t.id, tx, ty)) continue;
-    }
+    // Initialize tracking for Swipe
+    touchStarts[t.id] = { startX: tx, startY: ty, lastX: tx, lastY: ty, time: millis() };
+
+    // Check Buttons FIRST (Right side or specific buttons)
+    let hitButton = false;
     if (btnDash && !btnDash.active) {
-      if (btnDash.start(t.id, tx, ty)) continue;
+      if (btnDash.start(t.id, tx, ty)) hitButton = true;
     }
     if (btnPower && !btnPower.active && queuedPowerup) {
-      if (btnPower.start(t.id, tx, ty)) continue;
+      if (btnPower.start(t.id, tx, ty)) hitButton = true;
+    }
+
+    // Check Joystick (Left side only for dynamic start, and if NOT a button)
+    if (!hitButton && joystick && !joystick.active) {
+      // Only activate dynamic joystick on left half of screen
+      if (tx < LOGICAL_WIDTH / 2) {
+          joystick.start(t.id, tx, ty);
+      }
     }
   }
 
@@ -1689,6 +1702,12 @@ window.touchMoved = function () {
     let tx = (t.x - offsetX) / gameScale;
     let ty = (t.y - offsetY) / gameScale;
 
+    // Update tracker
+    if (touchStarts[t.id]) {
+        touchStarts[t.id].lastX = tx;
+        touchStarts[t.id].lastY = ty;
+    }
+
     if (joystick && joystick.id === t.id) {
       joystick.move(tx, ty);
     }
@@ -1699,11 +1718,35 @@ window.touchMoved = function () {
 window.touchEnded = function () {
   if (gameState !== 'playing') return false;
 
-  // Find which touch ended is tricky in p5 global without touch ID events in touchEnded
-  // We scan existing touches and see which ID is missing from our active objects
-
   let currentIds = touches.map((t) => t.id);
 
+  // Check ended swipes
+  for (let id in touchStarts) {
+      let numId = parseInt(id);
+      // If this tracked ID is no longer in current touches, it ended
+      if (!currentIds.includes(numId)) {
+          let data = touchStarts[id];
+          let dt = millis() - data.time;
+          let dx = data.lastX - data.startX;
+          let dy = data.lastY - data.startY;
+          let distSq = dx*dx + dy*dy;
+          
+          // Swipe Thresholds: Distance > 30, Time < 400ms
+          // Prevent swipe if it was controlling the joystick (to avoid dash on release)
+          let wasJoystick = (joystick && joystick.id === numId);
+          let wasButton = (btnDash && btnDash.id === numId) || (btnPower && btnPower.id === numId);
+          
+          if (!wasJoystick && !wasButton && dt < 400 && distSq > 30 * 30) {
+              // Normalize direction
+              let mag = sqrt(distSq);
+              performDash(dx/mag, dy/mag);
+          }
+          
+          delete touchStarts[id];
+      }
+  }
+
+  // Cleanup Controls
   if (joystick && joystick.active && !currentIds.includes(joystick.id)) {
     joystick.end(joystick.id);
   }
@@ -1953,24 +1996,35 @@ function keyPressed() {
   }
 }
 
+function triggerHaptic(ms) {
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
+
 // Extracted Dash Logic for re-use
-function performDash() {
+function performDash(inputDirX, inputDirY) {
   if (dashCooldown === 0) {
     dashDuration = dashDurationMax;
     dashCooldown = difficulties[difficulty].dashCooldownMax;
+    triggerHaptic(20); // Small pulse on dash
 
     let ix = 0,
       iy = 0;
 
-    // Combine Keyboard + Joystick Input
-    if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
-    if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
-    if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
-    if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
+    // Use provided direction (Swipe) or poll inputs
+    if (inputDirX !== undefined && inputDirY !== undefined) {
+      ix = inputDirX;
+      iy = inputDirY;
+    } else {
+      // Combine Keyboard + Joystick Input
+      if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) ix -= 1;
+      if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) ix += 1;
+      if (keyIsDown(UP_ARROW) || keyIsDown(87)) iy -= 1;
+      if (keyIsDown(DOWN_ARROW) || keyIsDown(83)) iy += 1;
 
-    if (joystick && joystick.active) {
-      ix += joystick.inputX;
-      iy += joystick.inputY;
+      if (joystick && joystick.active) {
+        ix += joystick.inputX;
+        iy += joystick.inputY;
+      }
     }
 
     if (ix !== 0 || iy !== 0) {
@@ -2242,7 +2296,7 @@ function drawScanlines() {
 
 // ─── MOBILE CONTROLS CLASSES ───
 class VirtualJoystick {
-  constructor(x, y, r) {
+  constructor(x, y, r, dynamic = false) {
     this.baseX = x;
     this.baseY = y;
     this.x = x;
@@ -2252,12 +2306,27 @@ class VirtualJoystick {
     this.active = false;
     this.inputX = 0;
     this.inputY = 0;
+    this.dynamic = dynamic;
+    this.visible = !dynamic;
   }
 
   start(id, x, y) {
-    // Check distance to base
+    // If dynamic, any touch becomes the center (caller validates zone)
+    if (this.dynamic) {
+      this.baseX = x;
+      this.baseY = y;
+      this.x = x;
+      this.y = y;
+      this.id = id;
+      this.active = true;
+      this.visible = true;
+      this.inputX = 0;
+      this.inputY = 0;
+      return true;
+    }
+
+    // Check distance to base (Static Mode)
     if (dist(x, y, this.baseX, this.baseY) < this.r * 2.0) {
-      // Generous hit area
       this.id = id;
       this.active = true;
       this.move(x, y);
@@ -2294,10 +2363,13 @@ class VirtualJoystick {
       this.y = this.baseY;
       this.inputX = 0;
       this.inputY = 0;
+      if (this.dynamic) this.visible = false;
     }
   }
 
   draw() {
+    if (!this.visible && !this.active) return;
+
     push();
     resetMatrix(); // Draw in screen coordinates
 
