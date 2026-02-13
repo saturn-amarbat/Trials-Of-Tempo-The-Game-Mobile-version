@@ -25,7 +25,7 @@ describe('Leaderboard', () => {
   it('should keep only top 10 scores', () => {
     // Fill with high scores to displace defaults (max default is 5000)
     for (let i = 0; i < 15; i++) {
-        leaderboard.addScore(`Player${i}`, 6000 + i);
+      leaderboard.addScore(`Player${i}`, 6000 + i);
     }
     const scores = leaderboard.getScores();
     expect(scores).toHaveLength(10);

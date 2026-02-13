@@ -8,6 +8,7 @@
 
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES } from './Config.js';
 import { Leaderboard } from './Leaderboard.js';
+import { PlayerData } from './PlayerData.js';
 
 // ─── RESOLUTION SETTINGS ───
 // LOGICAL_WIDTH and LOGICAL_HEIGHT imported from Config.js
@@ -143,6 +144,7 @@ let highScore = 0;
 let bestTime = 0;
 let totalCredits = 0;
 let leaderboard;
+let playerData;
 
 // ─── MOBILE CONTROLS ───
 // VirtualJoystick instance for left-hand movement
@@ -215,7 +217,14 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   calculateGameScale();
-  loadData();
+
+  playerData = new PlayerData();
+  playerData.load();
+  // Sync globals to PlayerData for compatibility (optional, but good for transition)
+  highScore = playerData.highScore;
+  bestTime = playerData.bestTime;
+  totalCredits = playerData.credits;
+
   leaderboard = new Leaderboard();
   colorMode(HSB, 360, 100, 100, 255);
   textFont('Rajdhani');
@@ -344,6 +353,9 @@ function draw() {
     case 'customize':
       drawCustomize();
       break;
+    case 'shop':
+      drawShop();
+      break;
     case 'instructions':
       drawInstructions();
       break;
@@ -433,9 +445,10 @@ function drawTitle() {
   let my = getLogicalMouseY();
 
   drawMenuButton('START', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 40, 300, 50, mx, my);
-  drawMenuButton('CUSTOMIZE', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100, 300, 50, mx, my);
-  drawMenuButton('INSTRUCTIONS', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 160, 300, 50, mx, my);
-  drawMenuButton('LEADERBOARD', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 220, 300, 50, mx, my);
+  drawMenuButton('SHOP', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100, 300, 50, mx, my);
+  drawMenuButton('CUSTOMIZE', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 160, 300, 50, mx, my);
+  drawMenuButton('INSTRUCTIONS', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 220, 300, 50, mx, my);
+  drawMenuButton('LEADERBOARD', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 280, 300, 50, mx, my);
 
   // Stats Display
   fill(0, 0, 90);
@@ -489,6 +502,67 @@ function drawCustomize() {
     drawCharacterPreview(i, x, y, selected || hover);
   }
   drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 160, 36, mx, my);
+}
+
+function drawShop() {
+  fill(30, 80, 10);
+  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+
+  drawParallaxBG();
+
+  fill(rgbHue, 90, 100);
+  textAlign(CENTER, CENTER);
+  textSize(48);
+  text('SHOP', LOGICAL_WIDTH / 2, 80);
+
+  // Show current credits
+  fill(50, 90, 100);
+  textSize(24);
+  text('CREDITS: ' + playerData.credits, LOGICAL_WIDTH / 2, 130);
+
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+
+  // Back Button
+  drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 160, 36, mx, my);
+
+  // Upgrades
+  let upgrades = [
+    { name: 'Dash Cooldown', key: 'dashCooldown', cost: 100 },
+    { name: 'Shield Duration', key: 'shieldDuration', cost: 150 },
+    { name: 'Magnet Radius', key: 'magnetRadius', cost: 200 },
+  ];
+
+  let startY = 200;
+  for (let i = 0; i < upgrades.length; i++) {
+    let u = upgrades[i];
+    let y = startY + i * 80;
+
+    fill(0, 0, 90);
+    textAlign(LEFT, CENTER);
+    text(u.name, LOGICAL_WIDTH / 2 - 200, y);
+
+    let level = playerData.getUpgradeLevel(u.key);
+    text('Lvl ' + level, LOGICAL_WIDTH / 2, y);
+
+    let cost = u.cost * (level + 1);
+    let canAfford = playerData.credits >= cost;
+
+    // Purchase Button
+    let btnX = LOGICAL_WIDTH / 2 + 150;
+    // Simple button logic for drawing
+    let hover = mx > btnX - 50 && mx < btnX + 50 && my > y - 20 && my < y + 20;
+
+    push();
+    rectMode(CENTER);
+    fill(canAfford ? (hover ? 140 : 120) : 0, canAfford ? 80 : 0, canAfford ? 80 : 40);
+    rect(btnX, y, 100, 40, 8);
+    fill(0, 0, 100);
+    textAlign(CENTER, CENTER);
+    textSize(16);
+    text(cost + ' CR', btnX, y);
+    pop();
+  }
 }
 
 function drawCharacterPreview(charIndex, x, y, highlighted) {
@@ -1663,7 +1737,7 @@ window.touchStarted = function () {
   // Game Logic
   for (let i = 0; i < touches.length; i++) {
     let t = touches[i];
-    
+
     // Check if we are already tracking this touch
     if (touchStarts[t.id]) continue;
 
@@ -1686,7 +1760,7 @@ window.touchStarted = function () {
     if (!hitButton && joystick && !joystick.active) {
       // Only activate dynamic joystick on left half of screen
       if (tx < LOGICAL_WIDTH / 2) {
-          joystick.start(t.id, tx, ty);
+        joystick.start(t.id, tx, ty);
       }
     }
   }
@@ -1704,8 +1778,8 @@ window.touchMoved = function () {
 
     // Update tracker
     if (touchStarts[t.id]) {
-        touchStarts[t.id].lastX = tx;
-        touchStarts[t.id].lastY = ty;
+      touchStarts[t.id].lastX = tx;
+      touchStarts[t.id].lastY = ty;
     }
 
     if (joystick && joystick.id === t.id) {
@@ -1722,28 +1796,28 @@ window.touchEnded = function () {
 
   // Check ended swipes
   for (let id in touchStarts) {
-      let numId = parseInt(id);
-      // If this tracked ID is no longer in current touches, it ended
-      if (!currentIds.includes(numId)) {
-          let data = touchStarts[id];
-          let dt = millis() - data.time;
-          let dx = data.lastX - data.startX;
-          let dy = data.lastY - data.startY;
-          let distSq = dx*dx + dy*dy;
-          
-          // Swipe Thresholds: Distance > 30, Time < 400ms
-          // Prevent swipe if it was controlling the joystick (to avoid dash on release)
-          let wasJoystick = (joystick && joystick.id === numId);
-          let wasButton = (btnDash && btnDash.id === numId) || (btnPower && btnPower.id === numId);
-          
-          if (!wasJoystick && !wasButton && dt < 400 && distSq > 30 * 30) {
-              // Normalize direction
-              let mag = sqrt(distSq);
-              performDash(dx/mag, dy/mag);
-          }
-          
-          delete touchStarts[id];
+    let numId = parseInt(id);
+    // If this tracked ID is no longer in current touches, it ended
+    if (!currentIds.includes(numId)) {
+      let data = touchStarts[id];
+      let dt = millis() - data.time;
+      let dx = data.lastX - data.startX;
+      let dy = data.lastY - data.startY;
+      let distSq = dx * dx + dy * dy;
+
+      // Swipe Thresholds: Distance > 30, Time < 400ms
+      // Prevent swipe if it was controlling the joystick (to avoid dash on release)
+      let wasJoystick = joystick && joystick.id === numId;
+      let wasButton = (btnDash && btnDash.id === numId) || (btnPower && btnPower.id === numId);
+
+      if (!wasJoystick && !wasButton && dt < 400 && distSq > 30 * 30) {
+        // Normalize direction
+        let mag = sqrt(distSq);
+        performDash(dx / mag, dy / mag);
       }
+
+      delete touchStarts[id];
+    }
   }
 
   // Cleanup Controls
@@ -1782,17 +1856,56 @@ function mousePressed() {
       // Width 300
       if (sfxButton) sfxButton.play();
 
-      // START Button (Center H/2 + 40, Height 50) -> Range approx 15 to 65
+      // START Button (y: H/2 + 40) -> Range approx 15 to 65
       if (my > LOGICAL_HEIGHT / 2 + 15 && my < LOGICAL_HEIGHT / 2 + 65) startGame();
-      // CUSTOMIZE Button (Center H/2 + 100, Height 50) -> Range approx 75 to 125
-      else if (my > LOGICAL_HEIGHT / 2 + 75 && my < LOGICAL_HEIGHT / 2 + 125)
-        gameState = 'customize';
-      // INSTRUCTIONS Button (Center H/2 + 160, Height 50) -> Range approx 135 to 185
+      // SHOP Button (y: H/2 + 100) -> Range approx 75 to 125
+      else if (my > LOGICAL_HEIGHT / 2 + 75 && my < LOGICAL_HEIGHT / 2 + 125) gameState = 'shop';
+      // CUSTOMIZE Button (y: H/2 + 160) -> Range approx 135 to 185
       else if (my > LOGICAL_HEIGHT / 2 + 135 && my < LOGICAL_HEIGHT / 2 + 185)
-        gameState = 'instructions';
-      // LEADERBOARD Button (Center H/2 + 220, Height 50) -> Range approx 195 to 245
+        gameState = 'customize';
+      // INSTRUCTIONS Button (y: H/2 + 220) -> Range approx 195 to 245
       else if (my > LOGICAL_HEIGHT / 2 + 195 && my < LOGICAL_HEIGHT / 2 + 245)
+        gameState = 'instructions';
+      // LEADERBOARD Button (y: H/2 + 280) -> Range approx 255 to 305
+      else if (my > LOGICAL_HEIGHT / 2 + 255 && my < LOGICAL_HEIGHT / 2 + 305)
         gameState = 'leaderboard';
+    }
+  } else if (gameState === 'shop') {
+    // Back Button
+    if (
+      mx > LOGICAL_WIDTH / 2 - 80 &&
+      mx < LOGICAL_WIDTH / 2 + 80 &&
+      my > LOGICAL_HEIGHT - 98 &&
+      my < LOGICAL_HEIGHT - 62
+    ) {
+      gameState = 'title';
+      if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
+    }
+
+    // Upgrade Buttons
+    let upgrades = [
+      { key: 'dashCooldown', cost: 100 },
+      { key: 'shieldDuration', cost: 150 },
+      { key: 'magnetRadius', cost: 200 },
+    ];
+    let startY = 200;
+    let btnX = LOGICAL_WIDTH / 2 + 150;
+
+    for (let i = 0; i < upgrades.length; i++) {
+      let u = upgrades[i];
+      let y = startY + i * 80;
+      let level = playerData.getUpgradeLevel(u.key);
+      let cost = u.cost * (level + 1);
+
+      // Button bounds (approx 100x40 centered)
+      if (mx > btnX - 50 && mx < btnX + 50 && my > y - 20 && my < y + 20) {
+        if (playerData.spendCredits(cost)) {
+          playerData.upgradeStat(u.key);
+          if (sfxPowerUp && sfxPowerUp.isLoaded()) sfxPowerUp.play();
+        } else {
+          if (sfxDamage && sfxDamage.isLoaded()) sfxDamage.play(); // Error sound
+        }
+      }
     }
   } else if (gameState === 'customize') {
     let startX = LOGICAL_WIDTH / 2 - 180;
@@ -2169,20 +2282,11 @@ function drawPausedOverlay() {
   pop();
 }
 
-function loadData() {
-  let savedScore = localStorage.getItem('tot_highscore');
-  let savedTime = localStorage.getItem('tot_besttime');
-  let savedCredits = localStorage.getItem('tot_credits');
-
-  if (savedScore !== null) highScore = parseInt(savedScore);
-  if (savedTime !== null) bestTime = parseInt(savedTime);
-  if (savedCredits !== null) totalCredits = parseInt(savedCredits);
-}
-
 function saveData() {
-  localStorage.setItem('tot_highscore', highScore);
-  localStorage.setItem('tot_besttime', bestTime);
-  localStorage.setItem('tot_credits', totalCredits);
+  playerData.highScore = highScore;
+  playerData.bestTime = bestTime;
+  playerData.credits = totalCredits;
+  playerData.save();
 }
 
 function drawWaitingScreen() {
