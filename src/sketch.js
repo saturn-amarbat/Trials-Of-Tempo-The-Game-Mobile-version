@@ -376,9 +376,6 @@ function draw() {
     case 'victory':
       drawVictory();
       break;
-    case 'credits':
-      drawCredits();
-      break;
   }
   pop();
 
@@ -458,10 +455,6 @@ function drawTitle() {
   fill(50, 90, 100);
   textSize(20);
   text('CREDITS: ' + totalCredits, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 55);
-
-  fill(0, 0, 60);
-  textSize(12);
-  text('Music by Cacola', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 20);
 }
 
 function drawMenuButton(label, x, y, w, h, mx, my) {
@@ -1653,11 +1646,6 @@ function drawGameOver() {
   fill(0, 0, 60);
   textSize(16);
   text('Press R to Retry | Press M for Menu', cx, cy + 120);
-
-  // ─── CREDITS ───
-  fill(0, 0, 90);
-  textSize(12);
-  text('Final project by Saturn, Yoshi, Frankie', cx, LOGICAL_HEIGHT - 40);
 }
 
 function drawVictory() {
@@ -1681,33 +1669,6 @@ function drawVictory() {
   textSize(14);
   text('Press M for menu', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2 + 100);
 }
-
-function drawCredits() {
-  fill(280, 60, 15);
-  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
-
-  let scrollY = LOGICAL_HEIGHT - (frameCount - creditStartFrame) * 2;
-  push();
-  translate(0, scrollY);
-  fill(0, 0, 100);
-  textAlign(CENTER, CENTER);
-  textSize(48);
-  text('TRIALS OF TEMPO', LOGICAL_WIDTH / 2, 100);
-  textSize(24);
-  text('Endless Mode', LOGICAL_WIDTH / 2, 180);
-  textSize(18);
-  fill(0, 0, 80);
-  text('━━━ CREDITS ━━━', LOGICAL_WIDTH / 2, 280);
-  text('Saturn - Project Lead', LOGICAL_WIDTH / 2, 320);
-  text('Yoshi - Developer', LOGICAL_WIDTH / 2, 350);
-  text('Frankie - Artist', LOGICAL_WIDTH / 2, 380);
-  text('Music by Cacola', LOGICAL_WIDTH / 2, 540);
-  textSize(16);
-  fill(0, 0, 60);
-  text('Press M to return to menu', LOGICAL_WIDTH / 2, 1120);
-  pop();
-}
-let creditStartFrame = 0;
 
 // ─── INPUT ───
 // Expose functions to window for p5.js global mode
@@ -2023,9 +1984,6 @@ function keyPressed() {
   else if (gameState === 'victory') {
     if (key.toLowerCase() === 'r') {
       hardRestartGame();
-    } else if (key.toLowerCase() === 'c') {
-      gameState = 'credits';
-      creditStartFrame = frameCount;
     } else if (key.toLowerCase() === 'm') {
       clearTimeout(loopTimer);
       loopTimer = null;
@@ -2035,14 +1993,6 @@ function keyPressed() {
       musicSessionID++;
 
       gameState = 'title';
-    }
-  }
-
-  // ─── CREDITS ───
-  else if (gameState === 'credits') {
-    if (key.toLowerCase() === 'm') {
-      gameState = 'title';
-      musicSessionID++;
     }
   }
 

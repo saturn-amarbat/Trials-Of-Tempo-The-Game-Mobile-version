@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Trials of Tempo</string>
+    <string name="title_activity_main">Trials of Tempo</string>
+    <string name="package_name">com.saturn.trialsoftempo</string>
+    <string name="custom_url_scheme">com.saturn.trialsoftempo</string>
+</resources>
