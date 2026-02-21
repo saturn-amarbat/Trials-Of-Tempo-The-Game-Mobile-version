@@ -6,6 +6,9 @@ All notable changes to this project will be documented in this file.
 
 ## [0.9.1] - 2026-02-15
 ### Added
+- **Audio Configuration**: Implemented a robust `SettingsManager` for handling volume, haptics, and latency.
+- **Settings Menu**: New UI accessible from the title screen to control Master Volume and Haptics.
+- **Calibration Mode**: Interactive tool to measure and apply audio latency compensation for perfect rhythm sync on Android.
 - **Mobile Deployment**: Integrated Capacitor (v6) for Android builds, supporting Java 17 environments.
 - **Build Artifacts**: Generated debug APK (`android/app/build/outputs/apk/debug/app-debug.apk`).
 - **Documentation**: Added `README_MOBILE.md` with installation instructions and known issues.

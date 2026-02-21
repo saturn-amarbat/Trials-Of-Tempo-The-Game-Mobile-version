@@ -9,6 +9,7 @@
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES } from './Config.js';
 import { Leaderboard } from './Leaderboard.js';
 import { PlayerData } from './PlayerData.js';
+import { SettingsManager } from './SettingsManager.js';
 
 // ─── RESOLUTION SETTINGS ───
 // LOGICAL_WIDTH and LOGICAL_HEIGHT imported from Config.js
@@ -16,6 +17,7 @@ let gameScale = 1;
 let offsetX = 0;
 let offsetY = 0;
 
+let settingsManager;
 let lastDir = 'right';
 let frameIndex = 0;
 let frameTimer = 0;
@@ -84,6 +86,14 @@ let lastBeatFrame = 0;
 let bgPulse = 0;
 let lastMusicBeatTime = 0;
 let musicSessionID = 0; // ✅ invalidates all old music loops
+
+// ─── CALIBRATION ───
+let calibrationOsc;
+let calibrationEnv;
+let calibrationTaps = [];
+let calibrationLastBeat = 0;
+let calibrationBPM = 120;
+let calibrationStartTime = 0;
 
 // ─── DIFFICULTY ───
 let difficulty = 'normal';
@@ -218,6 +228,9 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   calculateGameScale();
 
+  settingsManager = new SettingsManager();
+  settingsManager.applyVolume();
+
   playerData = new PlayerData();
   playerData.load();
   // Sync globals to PlayerData for compatibility (optional, but good for transition)
@@ -310,7 +323,7 @@ function draw() {
     }
 
     if (activeSong) {
-      let musicTime = activeSong.currentTime();
+      let musicTime = activeSong.currentTime() - settingsManager.getAudioOffset();
       let secondsPerBeat = 60 / bpm;
 
       if (musicTime >= lastMusicBeatTime + secondsPerBeat) {
@@ -345,6 +358,12 @@ function draw() {
       break;
     case 'title':
       drawTitle();
+      break;
+    case 'settings':
+      drawSettings();
+      break;
+    case 'calibration':
+      drawCalibration();
       break;
     case 'levelSelect':
       gameState = 'playing';
@@ -455,6 +474,9 @@ function drawTitle() {
   fill(50, 90, 100);
   textSize(20);
   text('CREDITS: ' + totalCredits, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 55);
+
+  // Settings Button (Top Right)
+  drawMenuButton('⚙️', LOGICAL_WIDTH - 40, 40, 50, 50, mx, my);
 }
 
 function drawMenuButton(label, x, y, w, h, mx, my) {
@@ -470,6 +492,120 @@ function drawMenuButton(label, x, y, w, h, mx, my) {
   textStyle(BOLD);
   text(label, x, y);
   pop();
+}
+
+// ─── CALIBRATION LOGIC ───
+function setupCalibration() {
+  if (!calibrationOsc) {
+    calibrationOsc = new p5.Oscillator('sine');
+    calibrationOsc.freq(880);
+    
+    calibrationEnv = new p5.Envelope();
+    calibrationEnv.setADSR(0.001, 0.05, 0, 0);
+    calibrationEnv.setRange(0.5, 0); // Max amp 0.5
+    
+    calibrationOsc.amp(0);
+    calibrationOsc.start();
+  }
+  
+  calibrationTaps = [];
+  calibrationStartTime = millis();
+  calibrationLastBeat = millis(); // Start now
+  gameState = 'calibration';
+}
+
+function drawCalibration() {
+  background(20);
+  
+  let interval = 60000 / calibrationBPM;
+  let elapsed = millis();
+  
+  // Metronome Logic
+  if (elapsed > calibrationLastBeat + interval) {
+    calibrationLastBeat += interval;
+    calibrationEnv.play(calibrationOsc, 0, 0.1);
+    // Visual Flash
+    background(60);
+  }
+  
+  // Visuals
+  fill(0, 0, 100);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  text("AUDIO CALIBRATION", LOGICAL_WIDTH / 2, 80);
+  
+  textSize(18);
+  text("Tap to the beat/flash!", LOGICAL_WIDTH / 2, 140);
+  
+  // Progress
+  text(`Taps: ${calibrationTaps.length} / 10`, LOGICAL_WIDTH / 2, 200);
+  
+  // Visual Metronome Circle
+  // Calculate progress relative to interval
+  let progress = (elapsed - calibrationLastBeat) / interval;
+  // If progress is negative (next beat logic), adjust
+  if (progress < 0) progress += 1;
+  
+  let r = map(progress, 0, 1, 100, 50);
+  noFill();
+  stroke(0, 0, 100);
+  strokeWeight(4);
+  ellipse(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, r, r);
+  
+  // Current Average
+  if (calibrationTaps.length > 0) {
+    let sum = 0;
+    for(let t of calibrationTaps) sum += t;
+    let avg = sum / calibrationTaps.length;
+    text(`Current Offset: ${floor(avg)}ms`, LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 150);
+  }
+  
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+  
+  // Done Button
+  if (calibrationTaps.length >= 8) {
+     drawMenuButton("SAVE & EXIT", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 200, 50, mx, my);
+  } else {
+     drawMenuButton("CANCEL", LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 150, 50, mx, my);
+  }
+}
+
+function drawSettings() {
+  fill(0, 0, 10);
+  rect(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT);
+  drawParallaxBG();
+  
+  fill(0, 0, 100);
+  textAlign(CENTER, CENTER);
+  textSize(48);
+  text('SETTINGS', LOGICAL_WIDTH / 2, 80);
+
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+
+  // Volume
+  textSize(24);
+  text(`Master Volume: ${floor(settingsManager.getMasterVolume() * 100)}%`, LOGICAL_WIDTH / 2, 150);
+  drawMenuButton('-', LOGICAL_WIDTH / 2 - 120, 150, 50, 40, mx, my);
+  drawMenuButton('+', LOGICAL_WIDTH / 2 + 120, 150, 50, 40, mx, my);
+
+  // Haptics
+  let hapticsState = settingsManager.settings.hapticsEnabled ? 'ON' : 'OFF';
+  text(`Haptics: ${hapticsState}`, LOGICAL_WIDTH / 2, 250);
+  drawMenuButton('TOGGLE', LOGICAL_WIDTH / 2, 290, 150, 40, mx, my);
+
+  // Audio Offset
+  let offsetMs = floor(settingsManager.getAudioOffset() * 1000);
+  text(`Audio Latency: ${offsetMs}ms`, LOGICAL_WIDTH / 2, 360);
+  drawMenuButton('-', LOGICAL_WIDTH / 2 - 120, 360, 50, 40, mx, my);
+  drawMenuButton('+', LOGICAL_WIDTH / 2 + 120, 360, 50, 40, mx, my);
+
+  // Calibrate Button
+  drawMenuButton('CALIBRATE AUDIO', LOGICAL_WIDTH / 2, 440, 250, 50, mx, my);
+
+  // Back Button
+  drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 150, 50, mx, my);
 }
 
 // ─── CUSTOMIZE ───
@@ -1813,6 +1949,13 @@ function mousePressed() {
     return;
   }
   if (gameState === 'title') {
+    // Settings Button (Top Right)
+    if (dist(mx, my, LOGICAL_WIDTH - 40, 40) < 30) {
+      if (sfxButton) sfxButton.play();
+      gameState = 'settings';
+      return;
+    }
+
     if (mx > LOGICAL_WIDTH / 2 - 150 && mx < LOGICAL_WIDTH / 2 + 150) {
       // Width 300
       if (sfxButton) sfxButton.play();
@@ -1831,6 +1974,92 @@ function mousePressed() {
       else if (my > LOGICAL_HEIGHT / 2 + 255 && my < LOGICAL_HEIGHT / 2 + 305)
         gameState = 'leaderboard';
     }
+  } else if (gameState === 'settings') {
+    // Volume - (x: W/2 - 120, y: 150)
+    if (dist(mx, my, LOGICAL_WIDTH / 2 - 120, 150) < 30) {
+       settingsManager.setMasterVolume(settingsManager.getMasterVolume() - 0.1);
+       if (sfxButton) sfxButton.play();
+    }
+    // Volume + (x: W/2 + 120, y: 150)
+    if (dist(mx, my, LOGICAL_WIDTH / 2 + 120, 150) < 30) {
+       settingsManager.setMasterVolume(settingsManager.getMasterVolume() + 0.1);
+       if (sfxButton) sfxButton.play();
+    }
+
+    // Haptics Toggle (x: W/2, y: 290, w: 150, h: 40)
+    if (mx > LOGICAL_WIDTH / 2 - 75 && mx < LOGICAL_WIDTH / 2 + 75 &&
+        my > 290 - 20 && my < 290 + 20) {
+       settingsManager.toggleHaptics();
+       if (sfxButton) sfxButton.play();
+       settingsManager.triggerHaptic(50);
+    }
+
+    // Audio Offset - (x: W/2 - 120, y: 360)
+    if (dist(mx, my, LOGICAL_WIDTH / 2 - 120, 360) < 30) {
+       settingsManager.setAudioOffset(settingsManager.getAudioOffset() - 0.01);
+       if (sfxButton) sfxButton.play();
+    }
+    // Audio Offset + (x: W/2 + 120, y: 360)
+    if (dist(mx, my, LOGICAL_WIDTH / 2 + 120, 360) < 30) {
+       settingsManager.setAudioOffset(settingsManager.getAudioOffset() + 0.01);
+       if (sfxButton) sfxButton.play();
+    }
+
+    // Calibrate Button (x: W/2, y: 440, w: 250, h: 50)
+    if (mx > LOGICAL_WIDTH / 2 - 125 && mx < LOGICAL_WIDTH / 2 + 125 &&
+        my > 440 - 25 && my < 440 + 25) {
+        setupCalibration();
+        if (sfxButton) sfxButton.play();
+    }
+
+    // Back Button (x: W/2, y: H - 80, w: 150, h: 50)
+    if (mx > LOGICAL_WIDTH / 2 - 75 && mx < LOGICAL_WIDTH / 2 + 75 &&
+        my > LOGICAL_HEIGHT - 80 - 25 && my < LOGICAL_HEIGHT - 80 + 25) {
+       gameState = 'title';
+       if (sfxButton) sfxButton.play();
+    }
+
+  } else if (gameState === 'calibration') {
+    // Check Button (Save or Cancel) - (x: W/2, y: H-80)
+    if (mx > LOGICAL_WIDTH / 2 - 100 && mx < LOGICAL_WIDTH / 2 + 100 &&
+        my > LOGICAL_HEIGHT - 80 - 25 && my < LOGICAL_HEIGHT - 80 + 25) {
+        
+        if (calibrationTaps.length >= 8) {
+             // SAVE
+             let sum = 0;
+             for(let t of calibrationTaps) sum += t;
+             let avg = sum / calibrationTaps.length;
+             // Convert ms to seconds
+             settingsManager.setAudioOffset(avg / 1000.0);
+        }
+        
+        // Exit
+        if (calibrationOsc) calibrationOsc.stop();
+        gameState = 'settings';
+        if (sfxButton) sfxButton.play();
+        return;
+    }
+
+    // Handle Tap
+    let interval = 60000 / calibrationBPM;
+    let diff = millis() - calibrationLastBeat;
+    
+    // Normalize logic
+    // We want distance to NEAREST beat
+    // If diff is 50, beat was 50ms ago.
+    // If diff is 450 (interval 500), next beat is in 50.
+    // So diff should be -50.
+    
+    if (diff > interval / 2) {
+       diff -= interval;
+    }
+    
+    calibrationTaps.push(diff);
+    if (calibrationTaps.length > 20) calibrationTaps.shift();
+    
+    // Feedback
+    triggerHaptic(10);
+
   } else if (gameState === 'shop') {
     // Back Button
     if (
@@ -2060,7 +2289,7 @@ function keyPressed() {
 }
 
 function triggerHaptic(ms) {
-  if (navigator.vibrate) navigator.vibrate(ms);
+  if (settingsManager) settingsManager.triggerHaptic(ms);
 }
 
 // Extracted Dash Logic for re-use
