@@ -6,7 +6,7 @@
 
 // Trials of Tempo - Endless Ramping Version last revised by Saturn on Yoshi's beat implementation
 
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES } from './Config.js';
+import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES, UPGRADES } from './Config.js';
 import { Leaderboard } from './Leaderboard.js';
 import { PlayerData } from './PlayerData.js';
 import { SettingsManager } from './SettingsManager.js';
@@ -656,40 +656,45 @@ function drawShop() {
   drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 160, 36, mx, my);
 
   // Upgrades
-  let upgrades = [
-    { name: 'Dash Cooldown', key: 'dashCooldown', cost: 100 },
-    { name: 'Shield Duration', key: 'shieldDuration', cost: 150 },
-    { name: 'Magnet Radius', key: 'magnetRadius', cost: 200 },
-  ];
-
   let startY = 200;
-  for (let i = 0; i < upgrades.length; i++) {
-    let u = upgrades[i];
+  let keys = Object.keys(UPGRADES);
+
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
+    let u = UPGRADES[key];
     let y = startY + i * 80;
+
+    let level = playerData.getUpgradeLevel(key);
+    let maxed = level >= u.maxLevel;
+    let cost = Math.floor(u.baseCost * Math.pow(u.costMult, level));
 
     fill(0, 0, 90);
     textAlign(LEFT, CENTER);
-    text(u.name, LOGICAL_WIDTH / 2 - 200, y);
+    textSize(24);
+    text(u.name, LOGICAL_WIDTH / 2 - 220, y);
 
-    let level = playerData.getUpgradeLevel(u.key);
-    text('Lvl ' + level, LOGICAL_WIDTH / 2, y);
-
-    let cost = u.cost * (level + 1);
-    let canAfford = playerData.credits >= cost;
+    textSize(18);
+    text(maxed ? 'MAX' : 'Lvl ' + level, LOGICAL_WIDTH / 2 - 20, y);
 
     // Purchase Button
     let btnX = LOGICAL_WIDTH / 2 + 150;
-    // Simple button logic for drawing
-    let hover = mx > btnX - 50 && mx < btnX + 50 && my > y - 20 && my < y + 20;
+    let canAfford = !maxed && playerData.credits >= cost;
+    let hover = mx > btnX - 60 && mx < btnX + 60 && my > y - 25 && my < y + 25;
 
     push();
     rectMode(CENTER);
-    fill(canAfford ? (hover ? 140 : 120) : 0, canAfford ? 80 : 0, canAfford ? 80 : 40);
-    rect(btnX, y, 100, 40, 8);
+    if (maxed) {
+      fill(0, 0, 40); // Greyed out
+    } else {
+      fill(canAfford ? (hover ? 140 : 120) : 0, canAfford ? 80 : 0, canAfford ? 80 : 40);
+    }
+
+    rect(btnX, y, 120, 50, 8);
+
     fill(0, 0, 100);
     textAlign(CENTER, CENTER);
-    textSize(16);
-    text(cost + ' CR', btnX, y);
+    textSize(20);
+    text(maxed ? 'SOLD OUT' : cost + ' CR', btnX, y);
     pop();
   }
 }
@@ -985,6 +990,9 @@ function updateGame() {
   }
 
   // Collectibles
+  let magnetLvl = playerData.getUpgradeLevel('magnetRadius');
+  let magnetR = UPGRADES.magnetRadius.values[magnetLvl] || 0;
+
   for (let i = collectibles.length - 1; i >= 0; i--) {
     let gem = collectibles[i];
     gem.spin += 5;
@@ -995,11 +1003,16 @@ function updateGame() {
     }
 
     let d = dist(player.x, player.y, gem.x, gem.y);
-    if (d < 120) {
-      gem.x += (player.x - gem.x) * 0.03;
-      gem.y += (player.y - gem.y) * 0.03;
+    // Base pickup range is small, but magnet increases it
+    let pullRange = max(100, magnetR); 
+    
+    if (d < pullRange) {
+      // Stronger pull if closer or if magnet is strong
+      let strength = 0.15; 
+      gem.x += (player.x - gem.x) * strength;
+      gem.y += (player.y - gem.y) * strength;
     }
-    if (d < 26) {
+    if (d < 40) { // Increased pickup radius slightly
       let points = 50 * comboMultiplier;
       score += points;
       spawnFloatingText(gem.x, gem.y, '+' + floor(points), color(50, 90, 100));
@@ -1464,11 +1477,16 @@ function activatePowerup(type) {
   }
 
   activePowerup = type;
-  powerupDuration = 300;
+  if (type === 'shield') {
+    let shieldLvl = playerData.getUpgradeLevel('shieldDuration');
+    powerupDuration = UPGRADES.shieldDuration.values[shieldLvl] || 300;
+    if (sfxPowerUp && sfxPowerUp.isLoaded()) sfxPowerUp.play();
+  } else {
+    powerupDuration = 300;
+  }
+
   if (type === 'speed') {
     if (sfxJetPower && sfxJetPower.isLoaded()) sfxJetPower.play();
-  } else if (type === 'shield') {
-    if (sfxPowerUp && sfxPowerUp.isLoaded()) sfxPowerUp.play();
   }
   flashAlpha = 120;
   comboMultiplier++;
@@ -1730,9 +1748,28 @@ function resetPlayer() {
     trail: [],
   };
   playerHealth = playerMaxHealth;
-  playerInvincible = 60;
+  playerInvincible = 0;
   hurtTimer = 0;
-  shockwaveActive = false;
+
+  let dashLvl = playerData.getUpgradeLevel('dashCooldown');
+  // UPGRADES.dashCooldown.values is an array of cooldowns
+  dashCooldownMax = UPGRADES.dashCooldown.values[dashLvl] || GAME_CONSTANTS.DASH_COOLDOWN_MAX;
+  
+  dashCooldown = 0;
+  dashDuration = 0;
+  dashPower = GAME_CONSTANTS.DASH_POWER;
+  dashDurationMax = GAME_CONSTANTS.DASH_DURATION_MAX;
+
+  // Initial difficulty settings
+  if (difficulties[difficulty]) {
+    // If difficulty overrides dashCooldown, use the MINIMUM of the two (so upgrades still help)
+    // Actually, difficulty usually sets damage. Let's respect difficulty if it sets strict rules,
+    // but typically upgrades should apply. Let's say difficulty sets the BASE cooldown if level 0.
+    // For now, let's prioritize the upgrade system as it's the core progression.
+    let diff = difficulties[difficulty];
+    // If difficulty has a specific dashCooldownMax, maybe use it as a base? 
+    // The current UPGRADES values are absolute. Let's stick to UPGRADES values.
+  }
 }
 
 // ─── END SCREENS ───
