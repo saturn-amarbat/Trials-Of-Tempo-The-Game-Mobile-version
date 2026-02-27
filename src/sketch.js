@@ -10,6 +10,7 @@ import { LOGICAL_WIDTH, LOGICAL_HEIGHT, GAME_CONSTANTS, DIFFICULTIES, UPGRADES }
 import { Leaderboard } from './Leaderboard.js';
 import { PlayerData } from './PlayerData.js';
 import { SettingsManager } from './SettingsManager.js';
+import { initAds, showReviveAd, showDoubleCreditsAd } from './AdMobService.js';
 
 // ─── RESOLUTION SETTINGS ───
 // LOGICAL_WIDTH and LOGICAL_HEIGHT imported from Config.js
@@ -42,6 +43,12 @@ let introVideo;
 let autoScrollSpeed = 2;
 let songDuration = 236;
 let hitStop = 0;
+
+// ─── AD STATE ───
+let hasUsedRevive = false;
+let creditsDoubled = false;
+let runCredits = 0;
+let adBusy = false;
 
 // ─── PLAYER ───
 let player;
@@ -239,6 +246,7 @@ function setup() {
   totalCredits = playerData.credits;
 
   leaderboard = new Leaderboard();
+  initAds();
   colorMode(HSB, 360, 100, 100, 255);
   textFont('Rajdhani');
   beatInterval = framesPerBeat(bpm);
@@ -603,6 +611,9 @@ function drawSettings() {
 
   // Calibrate Button
   drawMenuButton('CALIBRATE AUDIO', LOGICAL_WIDTH / 2, 440, 250, 50, mx, my);
+
+  // Privacy Policy
+  drawMenuButton('PRIVACY POLICY', LOGICAL_WIDTH / 2, 520, 250, 40, mx, my);
 
   // Back Button
   drawMenuButton('BACK', LOGICAL_WIDTH / 2, LOGICAL_HEIGHT - 80, 150, 50, mx, my);
@@ -1022,6 +1033,7 @@ function updateGame() {
 
       // ✅ CURRENCY UPDATE
       totalCredits++;
+      runCredits++;
 
       for (let k = 0; k < 6; k++) spawnParticle(player.x, player.y, color(50, 90, 100));
     }
@@ -1815,10 +1827,28 @@ function drawGameOver() {
   textSize(20);
   text('TOTAL CREDITS: ' + totalCredits, cx, cy + 70);
 
+  // ─── AD BUTTONS ───
+  let mx = getLogicalMouseX();
+  let my = getLogicalMouseY();
+
+  if (!hasUsedRevive && !adBusy) {
+    drawMenuButton('WATCH AD TO REVIVE', cx - 160, cy + 120, 280, 44, mx, my);
+  }
+
+  if (!creditsDoubled && runCredits > 0 && !adBusy) {
+    drawMenuButton('DOUBLE CREDITS (AD)', cx + 160, cy + 120, 280, 44, mx, my);
+  }
+
+  if (adBusy) {
+    fill(0, 0, 80);
+    textSize(18);
+    text('Loading ad...', cx, cy + 120);
+  }
+
   // ─── CONTROLS ───
   fill(0, 0, 60);
   textSize(16);
-  text('Press R to Retry | Press M for Menu', cx, cy + 120);
+  text('Press R to Retry | Press M for Menu', cx, cy + 170);
 }
 
 function drawVictory() {
@@ -2049,6 +2079,13 @@ function mousePressed() {
         if (sfxButton) sfxButton.play();
     }
 
+    // Privacy Policy (x: W/2, y: 520, w: 250, h: 40)
+    if (mx > LOGICAL_WIDTH / 2 - 125 && mx < LOGICAL_WIDTH / 2 + 125 &&
+        my > 520 - 20 && my < 520 + 20) {
+       window.open('privacy-policy.html', '_blank');
+       if (sfxButton) sfxButton.play();
+    }
+
     // Back Button (x: W/2, y: H - 80, w: 150, h: 50)
     if (mx > LOGICAL_WIDTH / 2 - 75 && mx < LOGICAL_WIDTH / 2 + 75 &&
         my > LOGICAL_HEIGHT - 80 - 25 && my < LOGICAL_HEIGHT - 80 + 25) {
@@ -2171,6 +2208,42 @@ function mousePressed() {
     ) {
       gameState = 'title';
       if (sfxButton && sfxButton.isLoaded()) sfxButton.play();
+    }
+  } else if (gameState === 'gameOver' && !adBusy) {
+    let cx = LOGICAL_WIDTH / 2;
+    let cy = LOGICAL_HEIGHT / 2;
+
+    // Revive button (left)
+    if (!hasUsedRevive &&
+        mx > cx - 160 - 140 && mx < cx - 160 + 140 &&
+        my > cy + 120 - 22 && my < cy + 120 + 22) {
+      adBusy = true;
+      showReviveAd().then((rewarded) => {
+        adBusy = false;
+        if (rewarded) {
+          hasUsedRevive = true;
+          playerHealth = playerMaxHealth;
+          displayedHealth = playerMaxHealth;
+          playerInvincible = 120;
+          gameState = 'playing';
+          if (gameLoopSong && gameLoopSong.isLoaded()) gameLoopSong.play();
+        }
+      });
+    }
+
+    // Double credits button (right)
+    if (!creditsDoubled && runCredits > 0 &&
+        mx > cx + 160 - 140 && mx < cx + 160 + 140 &&
+        my > cy + 120 - 22 && my < cy + 120 + 22) {
+      adBusy = true;
+      showDoubleCreditsAd().then((rewarded) => {
+        adBusy = false;
+        if (rewarded) {
+          creditsDoubled = true;
+          totalCredits += runCredits;
+          saveData();
+        }
+      });
     }
   }
 }
@@ -2431,6 +2504,11 @@ function startGame() {
   // ─── GAME STATE RESET ───
   gameState = 'playing';
   goalY = cameraY - 999999;
+
+  hasUsedRevive = false;
+  creditsDoubled = false;
+  runCredits = 0;
+  adBusy = false;
 
   score = 0;
   comboMultiplier = 1;

@@ -37,6 +37,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^6.2.0",
     "@capacitor/android": "^6.2.1",
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1"
